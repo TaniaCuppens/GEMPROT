@@ -95,11 +95,13 @@ Pop mode
 Genename/Visual/
 1.	Genename_hap_protein_plot.pdf : View of each haplotype in the population
 2.	Result_ analysis.html : Resume of the analysis
-With –fasta option:
+
+With `-fasta` option:
+
 Genename/Fasta/
-3.	Sample.sequencegene.ref.prot.fa : reference protein sequence
-4.	Sample.sequencegene.hap1.prot.fa : haplotype 1 protein sequence
-5.	Sample.sequencegene.hap2.prot.fa : haplotype 2 protein sequence
+1.	Sample.sequencegene.ref.prot.fa : reference protein sequence
+2.	Sample.sequencegene.hap1.prot.fa : haplotype 1 protein sequence
+3.	Sample.sequencegene.hap2.prot.fa : haplotype 2 protein sequence
 
 ## Run Examples
 
