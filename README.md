@@ -2,7 +2,8 @@
 Visualization of the impact on the protein of genetic variants found on each haplotype
 
 ## Introduction
-GEMPROT (Genetic Mutation to Protein Translation) is a two mode tool using phased mutations present within a gene to restore its haplotypes. It produces the protein sequences translated from each chromosome to identify the pattern of mutations in the gene. The first mode outputs both sequences for each individuals and provides a frequency summary of all haplotypes. The second mode is intended for larger populations and shows difference of genes haplotypes repartition.
+GEMPROT (Genetic Mutation to Protein Translation) is a tool to visualize the changes induced on the protein by the different variants found within a gene in an individual. Starting from a phased vcf, it translates the two haplotypes of each individual into the two corresponding protein sequences, allowing to vizualize if variants are in cis or trans. 
+GEMPROT proposes two different modes: the first mode outputs both sequences for each individuals and provides a frequency summary of all haplotypes. The second mode is intended for larger populations and shows difference of genes haplotypes repartition.
 
 ## Table of content
 
