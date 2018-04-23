@@ -26,8 +26,8 @@ GEMPROT is written in Perl v5.22.1 and requires the following packages before ru
 
 GEMPROT run with a reference genome (fasta), with two CCDS files (Consensus Coding Sequence) and with clinvar data file. These files already exist in the download directory but if you want to use others files please change their path in the configuration file. 
 You can download in the FTP sites (be careful about taking the data on the same reference genome): 
-- ftp://ftp.ncbi.nlm.nih.gov/pub/CCDS/\*/CCDS.current.txt 
-- ftp://ftp.ncbi.nlm.nih.gov/pub/CCDS/\*/CCDS2Sequence.current.txt
+- ftp://ftp.ncbi.nlm.nih.gov/pub/CCDS/*/CCDS.current.txt 
+- ftp://ftp.ncbi.nlm.nih.gov/pub/CCDS/*/CCDS2Sequence.current.txt
 - ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/  
 
 GEMPROT needs an internet access to import domain information via [Pfam](https://pfam.xfam.org/) (Protein families database).
