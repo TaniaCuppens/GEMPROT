@@ -54,6 +54,7 @@ Tools
 #########
 
 $samtools="/DIR_PATH/samtools";
+
 $vcftools_bin_dir="/DIR_PATH/bin/";
 
 ## Running GEMPROT
