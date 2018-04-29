@@ -1,0 +1,125 @@
+package conf::config;
+require Exporter;
+use warnings;
+
+@ISA = qw(Exporter);
+@EXPORT = qw($bcl2fastq_bin $cutadapt_bin $outputdir $q_name $pe_name $fastqc_bin $sickle_bin $bwa_mem_bin $bwa_RG_line $bwa_indexed_reference $samtools_bin $picard_SortSam_bin $picard_MarkDup_bin $GA_bin $ga_reference $dbsnp $tmp_dir $RefSeqGene $targetBedDir $convert2annovar_bin $table_annovar_bin $prepdir $annovardb %nb_threads $tophat_bin $read1adapt $read2adapt $bed_to_juncs_bin $bam2FastQ_bin);
+
+# vars
+######
+$q_name="all.q"; # all.q @icompute
+$pe_name="threaded";  # threaded @icompute
+
+%nb_threads=("AL"=>24,
+             "AN"=>1,
+             "AQ"=>1,
+             "BC"=>24,
+             "CA"=>1,
+             "FM"=>6,
+             "IN"=>1,
+             "PP"=>24,
+	     "VC"=>6,
+             "QC"=>6,
+             "SI"=>1,
+             "SB"=>4,  #to limit cpu load on one node
+             "TH"=>24
+         );
+
+# repos dir
+############
+
+$repos_dir="/illumina/NGS_REPOS";
+
+#bin list
+#########
+
+$java="/shared/jdk1.7.0_67/bin/";
+
+$bcl2fastq_bin.=$repos_dir."/bioinfo_softwares/bcl2fastq_bin/bin/configureBclToFastq.pl";
+#$bcl2fastq_bin.="/illumina/sf_NGS/BclToFastq/bin/configureBclToFastq.pl";
+
+
+#Illumina adapters
+
+#Multiplexing Read 1 Sequencing Primer
+#5' ACACTCTTTCCCTACACGACGCTCTTCCGATCT
+#Multiplexing Index Read Sequencing Primer
+#5' GATCGGAAGAGCACACGTCTGAACTCCAGTCAC
+#Multiplexing Read 2 Sequencing Primer
+#5' GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT 
+
+# Illumina Multiplexing Adapter 1                                 GATCGGAAGAGCACACGTCT
+# Illumina Multiplexing Adapter 2                                 ACACTCTTTCCCTACACGACGCTCTTCCGATCT
+# Illumina Multiplexing PCR Primer 1.01                   AATGATACGGCGACCACCGAGATCTACACTCTTTCCCTACACGACGCTCTTCCGATCT
+# Illumina Multiplexing PCR Primer 2.01                   GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT
+# Illumina Multiplexing Read1 Sequencing Primer   ACACTCTTTCCCTACACGACGCTCTTCCGATCT
+# Illumina Multiplexing Index Sequencing Primer   GATCGGAAGAGCACACGTCTGAACTCCAGTCAC
+# Illumina Multiplexing Read2 Sequencing Primer   GTGACTGGAGTTCAGACGTGTGCTCTTCCGATC
+
+# doc Amandine
+# >P5
+# AATGATACGGCGACCACCGAGATCT
+# >Rd1 Seq Primer
+# ACACTCTTTCCCTACACGACGCTCTTCCGATCT
+# >Index Seq Primer
+# AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC
+# >Rd2 Seq Primer (rev comp of Index Seq Primer)
+# GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT
+# >P7
+# ATCTCGTATGCCGTCTTCTGCTTG
+
+
+$read1adapt="-a Rd1SeqPrimer=ACACTCTTTCCCTACACGACGCTCTTCCGATCT";
+$read2adapt="-a Rd2SeqPrimer=GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT";
+
+$cutadapt_bin=$repos_dir."/bioinfo_softwares/cutadapt/bin/cutadapt";
+
+$fastqc_bin=$repos_dir."/bioinfo_softwares/FastQC/fastqc";
+
+$sickle_bin=$repos_dir."/bioinfo_softwares/sickle/sickle";
+
+$bwa_mem_bin=$repos_dir."/bioinfo_softwares/bwa/bwa";
+$bwa_RG_line="\@RG\tID:SID\tSM:SPL\tLB:GENOMIQUE\tPL:Illumina";
+$bwa_indexed_reference=$repos_dir."/Ref/Hs/hg19.fa";
+
+$tophat_bin="export PATH=\$PATH:".$repos_dir."/bioinfo_softwares/bowtie2:".$repos_dir."/bioinfo_softwares/samtools:".$repos_dir."/bioinfo_softwares/tophat\n";
+$tophat_bin.="tophat";
+
+$bed_to_juncs_bin="export PATH=\$PATH:".$repos_dir."/bioinfo_softwares/bowtie2:".$repos_dir."/bioinfo_softwares/samtools:".$repos_dir."/bioinfo_softwares/tophat\n";
+$bed_to_juncs_bin.="bed_to_juncs";
+
+$bam2FastQ_bin="/illumina/NGS_REPOS/bioinfo_softwares/bamUtil/bin/bam bam2FastQ";
+
+$samtools_bin=$repos_dir."/bioinfo_softwares/samtools/samtools";
+
+# java softwares
+################
+
+$tmp_dir="/tmp";
+$Xmx="-Xmx8g";
+
+$picard_SortSam_bin=$java."java $Xmx -jar ".$repos_dir."/bioinfo_softwares/picard-tools/SortSam.jar ";
+$picard_MarkDup_bin=$java."java $Xmx -jar ".$repos_dir."/bioinfo_softwares/picard-tools/MarkDuplicates.jar ";
+
+$GA_bin=$java."java -Djava.io.tmpdir=$tmp_dir $Xmx -jar ".$repos_dir."/bioinfo_softwares/GenomeAnalysisTK/GenomeAnalysisTK.jar ";
+$ga_reference=$repos_dir."/Ref/Hs/hg19.fa";
+$dbsnp=$repos_dir."/Ref/Hs/dbsnp_138.hg19.vcf";
+$RefSeqGene=$repos_dir."/Ref/Hs/RefGene.sorted.txt"; # fixed ?
+$targetBedDir=$repos_dir."/Ref/Hs/TargetCaptKit";
+
+# Annovar
+#########
+
+$table_annovar_bin=$repos_dir."/bioinfo_softwares/annovar/table_annovar.pl";
+$annovardb=$repos_dir."/bioinfo_softwares/annovar/humandb";
+
+# dir list
+##########
+$outputdir="/illumina/Plateforme/NGS_OUPUT";
+if (!-d $outputdir) {
+    mkdir $outputdir or die "can't create ".$outputdir."\n";
+}
+
+$prepdir="/shared/CLI_NGS";
+
+1;
