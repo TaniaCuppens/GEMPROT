@@ -114,7 +114,7 @@ Indiv mode:
 
 Pop mode: 
 
-`perl Script/haplotype_translation_final.pl --phased-vcf Example/example.vcf --output-dir Results/Run_Example --sample-file Example/sample.txt --loc-file Example/loc.txt --gene-file Example/chr1_gene_CCDS.gene --pop`
+`time perl Script/haplotype_translation_final.pl --phased-vcf Example/AFM_CCDS3557.1.example.vcf --output-dir Results/Run_pop_Example --sample-file Example/pop_example.sample --pop --synonymous --gene AFM`
 
 You can add `–-synonymous` argument to view the synonymous mutation on the haplotype.
 
