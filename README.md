@@ -110,7 +110,7 @@ Genename/Fasta/
 
 Indiv mode: 
 
-`perl Script/haplotype_translation_final.pl --phased-vcf Example/example.vcf/GJB2_CCDS9290.1.HG0048.vcf --output-dir Results/Run_Example --sample-file HG00448.sample --indiv --synonymous --gene GJB2`
+`perl Script/haplotype_translation_final.pl --phased-vcf Example/GJB2_CCDS9290.1.HG0048.vcf --output-dir Results/Run_Example --sample-file Example/HG00448.sample --indiv --synonymous --gene GJB2`
 
 Pop mode: 
 
