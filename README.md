@@ -120,7 +120,7 @@ You can add `–-synonymous` argument to view the synonymous mutation on the hap
 
 ## Result Examples
 
-As mentioned 
+To see the examples results go to the Web Application :http://med-laennec.univ-brest.fr/GEMPROT/ 
 
 ## Contact Information
 
