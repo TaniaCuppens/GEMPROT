@@ -270,7 +270,7 @@ sub Indiv{
 		open(CCDS, "grep -w \"".$gene_name."\" ".$conf::config::CCDS_file." | grep -w \"".$ccds_num."\" | ");
 		@coding = <CCDS>;
 		
-		printf Dumper (@coding);
+		#printf Dumper (@coding);
     @choose_coding = @coding;
 		  if (@coding ==0){
 			  printf "\n################ \n No coding sequence known for this gene, verify if official gene symbol is correct\n################\n\n";
