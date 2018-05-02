@@ -39,14 +39,15 @@ my $usage="
 		--output-dir	: specify output directory
 		--sample-file	: sample name with his location ; tab delimited file (ex: HG00096	EUR)
 		--gene | --gene-file	: official gene symbol or official gene symbol with one ccds in tab delimited file (ex: TP53	CCDS11118.1)
-		--loc-file	: location file
+		
 \n";
 my $opt="
     OPTIONAL:
-            --fasta : if you want protein fasta file for each haplotype and reference
-		--synonymous	: if you want to see synonymous SNP
-            --domain : if you know protein domain 
-		-h	: show this message and quit
+    	    --loc-file	 : location file
+            --fasta 	 : if you want protein fasta file for each haplotype and reference
+	    --synonymous : if you want to see synonymous SNP
+            --domain     : if you know protein domain 
+	    -h	         : show this message and quit
 
 \n";
 
