@@ -6,7 +6,7 @@ use warnings;
 @EXPORT = qw($genome_reference $CCDS_file $CCDS_NM_file $samtools $java $clin_var $vcftools_bin_dir);
 
 
-Reference ############
+#Reference ############
 
 $genome_reference= "/FILE_PATH/*.fasta";
 
@@ -16,7 +16,6 @@ $CCDS_NM_file="/FILE_PATH/CCDS2Sequence.current.txt";
 
 $clin_var="/FILE_PATH/clinvar_*.vcf.gz";
 
-Tools #########
 
 $samtools="/DIR_PATH/samtools";
 
