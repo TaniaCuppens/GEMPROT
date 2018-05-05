@@ -26,9 +26,16 @@ GEMPROT is written in Perl v5.22.1 and requires the following packages before ru
 
 GEMPROT run with a reference genome (fasta), with two CCDS files (Consensus Coding Sequence) and with clinvar data file. These files already exist in the download directory but if you want to use others files please change their path in the configuration file. 
 You can download in the FTP sites (be careful about taking the data on the same reference genome): 
-- ftp://ftp.ncbi.nlm.nih.gov/pub/CCDS/*/CCDS.current.txt 
-- ftp://ftp.ncbi.nlm.nih.gov/pub/CCDS/*/CCDS2Sequence.current.txt
-- ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/  
+GRCh37 :
+- ftp://ftp.ncbi.nlm.nih.gov/pub/CCDS/archive/15/CCDS.current.txt
+- ftp://ftp.ncbi.nlm.nih.gov/pub/CCDS/archive/15/CCDS2Sequence.current.txt
+- ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/clinvar_20180429.vcf.gz  
+
+GRCh38 :
+- ftp://ftp.ncbi.nlm.nih.gov/pub/CCDS/current_human/CCDS.current.txt
+- ftp://ftp.ncbi.nlm.nih.gov/pub/CCDS/current_human/CCDS2Sequence.current.txt
+- ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20180429.vcf.gz
+
 
 GEMPROT needs an internet access to import domain information via [Pfam](https://pfam.xfam.org/) (Protein families database).
 
@@ -111,11 +118,11 @@ Genename/Fasta/
 
 Indiv mode: 
 
-`perl Script/haplotype_translation_final.pl --phased-vcf Example/GJB2_CCDS9290.1.HG0048.vcf --output-dir Results/Run_Example --sample-file Example/HG00448.sample --indiv --synonymous --gene GJB2`
+`perl Script/haplotype_translation_final.pl --phased-vcf Example/GJB2_CCDS9290.1.HG0048.vcf --output-dir Run_Example --sample-file Example/HG00448.sample --indiv --synonymous --gene GJB2`
 
 Pop mode: 
 
-`time perl Script/haplotype_translation_final.pl --phased-vcf Example/AFM_CCDS3557.1.example.vcf --output-dir Results/Run_pop_Example --sample-file Example/pop_example.sample --pop --synonymous --gene AFM`
+`time perl Script/haplotype_translation_final.pl --phased-vcf Example/AFM_CCDS3557.1.example.vcf --output-dir Run_pop_Example --sample-file Example/pop_example.sample --pop --synonymous --gene AFM`
 
 You can add `–-synonymous` argument to view the synonymous mutation on the haplotype.
 
