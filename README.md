@@ -19,6 +19,8 @@ GEMPROT proposes two different modes: the first mode outputs both sequences for 
 ## Dependencies
 
 GEMPROT is written in Perl v5.22.1 and requires the following packages before running:
+- perl with "libxml2" package 
+`sudo apt-get install libxml-libxml-perl`
 -	[Vcftools](https://sourceforge.net/projects/vcftools/files/) 
 -	[Samtools](https://sourceforge.net/projects/samtools/files/samtools/0.1.19/)  
 -	R with "optparse" package
