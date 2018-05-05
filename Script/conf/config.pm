@@ -16,6 +16,7 @@ $CCDS_NM_file="/FILE_PATH/CCDS2Sequence.current.txt";
 
 $clin_var="/FILE_PATH/clinvar_*.vcf.gz";
 
+#Tools ############
 
 $samtools="/DIR_PATH/samtools";
 
