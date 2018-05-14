@@ -3,7 +3,7 @@ require Exporter;
 use warnings;
 
 @ISA = qw(Exporter);
-@EXPORT = qw($genome_reference $CCDS_file $CCDS_NM_file $samtools $java $clin_var $vcftools_bin_dir);
+@EXPORT = qw($genome_reference $CCDS_file $CCDS_NM_file $samtools $java $clin_var $vcftools);
 
 
 #Reference ############
@@ -20,7 +20,7 @@ $clin_var="/FILE_PATH/clinvar_*.vcf.gz";
 
 $samtools="/DIR_PATH/samtools";
 
-$vcftools_bin_dir="/DIR_PATH/bin/";
+$vcftools="/DIR_PATH/vcftools";
 
 $java="java";
 
