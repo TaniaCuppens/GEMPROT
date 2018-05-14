@@ -22,7 +22,7 @@ sub checkfileconfig{
   my $samb="";
   my $vcft="";
   open(REFG, "ls -l ".$conf::config::genome_reference." 2> /dev/null | "); 
-  $refg=<REFG>;
+  $refg.=<REFG>;
   if ($refg eq "") {
     die "\nERROR : reference genome is not found check configuration file, conf.pm \n";
   }
@@ -32,22 +32,22 @@ sub checkfileconfig{
     die "\nERROR : ccds file is not found check configuration file, conf.pm \n";
   }
   open(CCDSNM, "ls -l ".$conf::config::CCDS_file." 2> /dev/null | "); 
-  $ccdsnm=<CCDSNM>;
+  $ccdsnm.=<CCDSNM>;
   if ($ccdsnm eq "") {
     die "\nERROR : ccds NM file is not found check configuration file, conf.pm \n";
   }
   open(CLINF, "ls -l ".$conf::config::vcftools." 2> /dev/null | "); 
-  $clinf=<CLINF>;
+  $clinf.=<CLINF>;
   if ($clinf eq "") {
     die "\nERROR : clinvar file is not found check configuration file, conf.pm \n";
   }
   open(SAMTOOLSB, "ls -l ".$conf::config::vcftools." 2> /dev/null | "); 
-  $samb=<SAMTOOLSB>;
+  $samb.=<SAMTOOLSB>;
   if ($samb eq "") {
     die "\nERROR : samtools is not found check configuration file, conf.pm \n";
   }
   open(VCFTOOLS, "ls -l ".$conf::config::vcftools." 2> /dev/null | "); 
-  $vcft=<VCFTOOLS>;
+  $vcft.=<VCFTOOLS>;
   if ($vcft eq "") {
     die "\nERROR : vcftools is not found check configuration file, conf.pm \n";
   }
