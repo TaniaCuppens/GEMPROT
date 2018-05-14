@@ -14,6 +14,45 @@ use Clone qw(clone);
 use Scalar::Util qw(looks_like_number);
 
 
+sub checkfileconfig{
+  my $refg="";
+  my $ccdsf="";
+  my $ccdsnm="";
+  my $clinf="";
+  my $samb="";
+  my $vcft="";
+  open(REFG, "ls -l ".$conf::config::genome_reference." 2> /dev/null | "); 
+  $refg=<REFG>;
+  if ($refg eq "") {
+    die "\nERROR : reference genome is not found check configuration file, conf.pm \n";
+  }
+  open(CCDSF, "ls -l ".$conf::config::CCDS_file." 2> /dev/null | "); 
+  $ccdsf.=<CCDSF>;
+  if ($ccdsf eq "") {
+    die "\nERROR : ccds file is not found check configuration file, conf.pm \n";
+  }
+  open(CCDSNM, "ls -l ".$conf::config::CCDS_file." 2> /dev/null | "); 
+  $ccdsnm=<CCDSNM>;
+  if ($ccdsnm eq "") {
+    die "\nERROR : ccds NM file is not found check configuration file, conf.pm \n";
+  }
+  open(CLINF, "ls -l ".$conf::config::vcftools." 2> /dev/null | "); 
+  $clinf=<CLINF>;
+  if ($clinf eq "") {
+    die "\nERROR : clinvar file is not found check configuration file, conf.pm \n";
+  }
+  open(SAMTOOLSB, "ls -l ".$conf::config::vcftools." 2> /dev/null | "); 
+  $samb=<SAMTOOLSB>;
+  if ($samb eq "") {
+    die "\nERROR : samtools is not found check configuration file, conf.pm \n";
+  }
+  open(VCFTOOLS, "ls -l ".$conf::config::vcftools." 2> /dev/null | "); 
+  $vcft=<VCFTOOLS>;
+  if ($vcft eq "") {
+    die "\nERROR : vcftools is not found check configuration file, conf.pm \n";
+  }
+}
+
 sub clinvartohash{
 	my ($chr, $with_chr)=@_;
 	my @CLNORIGIN;
@@ -993,7 +1032,7 @@ sub parsevcf2{
     	}
      
 		elsif(defined $seq_hash_ref{$fich1[0]}{$variant_pos}){
-         #print $fich1[3]." ".$fich1[4]." position $fich1[1]in coding region\n ";
+        # print $fich1[3]." ".$fich1[4]." position $fich1[1]in coding region\n ";
          # regex for ALT and REF contain only nucleotide (ATGC) and add "," for billelic multiallelic site
       if ($fich1[3]=~ m/^[ATGC\,]+$/ && $fich1[4]=~ m/^[ATGC\,]+$/) {
         my @geno = split(/:/, $fich1[$num_col]);
