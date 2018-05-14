@@ -43,11 +43,11 @@ my $usage="
 \n";
 my $opt="
     OPTIONAL:
-    	    --loc-file	 : location file
-            --fasta 	 : if you want protein fasta file for each haplotype and reference
-	    --synonymous : if you want to see synonymous SNP
-            --domain     : if you know protein domain 
-	    -h	         : show this message and quit
+    --loc-file	: location file
+            --fasta : if you want protein fasta file for each haplotype and reference
+		--synonymous	: if you want to see synonymous SNP
+            --domain : if you know protein domain 
+		-h	: show this message and quit
 
 \n";
 
@@ -91,14 +91,14 @@ sub CmdLineParser () {
 	}
 	else {
 		$mode = "indiv";
-		print "Entering in --".$mode." GEMPROT mode\n";;
+		print "Entering in --".$mode." GEMPROT mode\n";
 	
 	}
 }
 
 CmdLineParser();
 
-
+Fonction::checkfileconfig;
 
 if ($mode eq "pop"){
 	Pop::Pop(\%Cmdline);

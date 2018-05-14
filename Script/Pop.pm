@@ -341,11 +341,11 @@ foreach $gene_line (@gene_id){
 		print "\n==> RUN VCFTOOLS \n";
    if ($in_phased =~ /.gz$/) {
     print "gzip vcf \n";
-      system($conf::config::vcftools_bin_dir."/vcftools --gzvcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased." > /dev/null 2>&1");
+      system($conf::config::vcftools." --gzvcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased." > /dev/null 2>&1");
       #print "system($conf::config::vcftools_bin_dir./vcftools --gzvcf .$in_phased. --recode --from-bp .$gene_start. --to-bp .$gene_stop. --chr .$chr. --out .$select_phased. > /dev/null 2>&1";
     }
     else {
-      system($conf::config::vcftools_bin_dir."/vcftools --vcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased." > /dev/null 2>&1");
+      system($conf::config::vcftools." --vcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased." > /dev/null 2>&1");
       #print "system($conf::config::vcftools_bin_dir./vcftools --vcf .$in_phased. --recode --from-bp .$gene_start. --to-bp .$gene_stop. --chr .$chr. --out .$select_phased. > /dev/null 2>&1";
     }
 
@@ -438,7 +438,7 @@ foreach $gene_line (@gene_id){
       chomp $sequence_protref;
       #printf $sequence_protref." sequence protein \n".$sequence_gene_ref."\n";
       if ($sequence_protref !~ /^M/){
-           print "\n################ \n It is non-coding gene\n################\n\n";
+           print "\n################ \n It is non-coding gene. Please check if you taking the data on the same reference genome \n################\n\n";
            next;
       }
 			my $domain = Fonction::get_url_pfam($sequence_gene_ref, $gene, $cache);

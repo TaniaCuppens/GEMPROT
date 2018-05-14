@@ -324,12 +324,14 @@ sub Indiv{
 		  printf "\n==> RUN VCFTOOLS \n";
      if ($in_phased =~ /.gz$/) {
       printf "gzip vcf \n";
-      #print $conf::config::vcftools_bin_dir."/vcftools --gzvcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased;
-      system($conf::config::vcftools_bin_dir."/vcftools --gzvcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased." > /dev/null 2>&1");
+      print $conf::config::vcftools." --gzvcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased;
+      system($conf::config::vcftools." --gzvcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased);
+      #." > /dev/null 2>&1");
     }
     else {
-      #print $conf::config::vcftools_bin_dir."/vcftools --vcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased;
-      system($conf::config::vcftools_bin_dir."/vcftools --vcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased." > /dev/null 2>&1");
+      print $conf::config::vcftools." --vcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased;
+      system($conf::config::vcftools." --vcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased);
+      #." > /dev/null 2>&1");
     }
 
      printf "\n==> END VCFTOOLS \n";
@@ -425,7 +427,7 @@ sub Indiv{
 			}
 			$sequence_protref = Fonction::translate($sequence_ref, $sequence_gene_ref, $sequence_name,$fa_opt);
       if ($sequence_protref eq "" || $sequence_protref eq "*"){
-           print "\n################ \n It is non-coding gene\n################\n\n";
+           print "\n################ \n It is non-coding gene. Please check if you taking the data on the same reference genome\n################\n\n";
            next;
       }
       #printf $sequence_gene_ref;
