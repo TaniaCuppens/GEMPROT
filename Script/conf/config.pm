@@ -20,7 +20,7 @@ $clin_var="/FILE_PATH/clinvar_*.vcf.gz";
 
 $samtools="/DIR_PATH/samtools";
 
-$vcftools_bin_dir="/DIR_PATH/bin/";
+$vcftools="/DIR_PATH/vcftools";
 
 $java="java";
 
