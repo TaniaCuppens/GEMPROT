@@ -26,7 +26,7 @@ GEMPROT is written in Perl v5.22.1 and requires the following packages before ru
 -	R with "optparse" package
 `install.packages("optparse")`
 
-GEMPROT run with a reference genome (fasta), with two CCDS files (Consensus Coding Sequence) and with clinvar data file. These files already exist in the download directory but if you want to use others files please change their path in the configuration file. 
+GEMPROT run with a reference genome (fasta) and its index (.fai), with two CCDS files (Consensus Coding Sequence) and with clinvar data file. These files already exist in the download directory but if you want to use others files please change their path in the configuration file. 
 You can download in the FTP sites (be careful about taking the data on the same reference genome): 
 GRCh37 :
 - ftp://ftp.ncbi.nlm.nih.gov/pub/CCDS/archive/15/CCDS.current.txt
