@@ -31,17 +31,17 @@ sub checkfileconfig{
   if ($ccdsf eq "") {
     die "\nERROR : ccds file is not found check configuration file, conf.pm \n";
   }
-  open(CCDSNM, "ls -l ".$conf::config::CCDS_file." 2> /dev/null | "); 
+  open(CCDSNM, "ls -l ".$conf::config::CCDS_NM_file." 2> /dev/null | "); 
   $ccdsnm.=<CCDSNM>;
   if ($ccdsnm eq "") {
     die "\nERROR : ccds NM file is not found check configuration file, conf.pm \n";
   }
-  open(CLINF, "ls -l ".$conf::config::vcftools." 2> /dev/null | "); 
+  open(CLINF, "ls -l ".$conf::config::clin_var." 2> /dev/null | "); 
   $clinf.=<CLINF>;
   if ($clinf eq "") {
     die "\nERROR : clinvar file is not found check configuration file, conf.pm \n";
   }
-  open(SAMTOOLSB, "ls -l ".$conf::config::vcftools." 2> /dev/null | "); 
+  open(SAMTOOLSB, "ls -l ".$conf::config::samtools." 2> /dev/null | "); 
   $samb.=<SAMTOOLSB>;
   if ($samb eq "") {
     die "\nERROR : samtools is not found check configuration file, conf.pm \n";
@@ -995,10 +995,10 @@ sub get_sample {
 sub parsevcf2{
     my ($vcf,$seq_hash,$seq_hash1,$seq_hash2,$seq_ref1,$seq_ref2,$sample,$clin,$gene) = @_;
     if ($vcf =~ /.gz$/) {
-      open(IN, "gunzip -c $vcf |") || die "can’t open pipe to $vcf";
+      open(IN, "gunzip -c $vcf |") || die "canÂ’t open pipe to $vcf";
     }
     else {
-      open(IN, $vcf) || die "can’t open $vcf";
+      open(IN, $vcf) || die "canÂ’t open $vcf";
     }
     #open VCF, $vcf;
     my @variant = <IN>;
@@ -1127,7 +1127,7 @@ sub parsevcf2{
 					}
 				}
 				else {
-					#print "\n c'est une délétion ";
+					#print "\n c'est une dÃ©lÃ©tion ";
 					for ($i=0; $i<length($fich1[3]); $i++) {
               if ($i<=((length($ALT))-1)) {
                 $mut_hash{$fich1[0]}{$variant_pos+$i}{"hap1"}{"vcf"}=$fich1[0].":".$fich1[1]." ".$fich1[3].">".$ALT; 
@@ -1211,7 +1211,7 @@ sub parsevcf2{
 					}
 				}
 				else {
-					#print "\n c'est une délétion ";
+					#print "\n c'est une dÃ©lÃ©tion ";
 					for ($i=0; $i<length($fich1[3]); $i++) {
               if ($i<=((length($ALT))-1)) {
                 $mut_hash{$fich1[0]}{$variant_pos+$i}{"hap2"}{"vcf"}=$fich1[0].":".$fich1[1]." ".$fich1[3].">".$ALT; 
