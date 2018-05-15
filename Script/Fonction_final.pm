@@ -16,14 +16,18 @@ use Scalar::Util qw(looks_like_number);
 
 sub checkfileconfig{
   my $refg="";
+  my $refi="";
   my $ccdsf="";
   my $ccdsnm="";
   my $clinf="";
   my $samb="";
   my $vcft="";
-  open(REFG, "ls -l ".$conf::config::genome_reference." 2> /dev/null | "); 
+  open(REFG, "ls -l ".$conf::config::genome_reference."*.fai 2> /dev/null | "); 
   $refg.=<REFG>;
-  if ($refg eq "") {
+  my $ref_dir = dirname $conf::config::genome_reference;
+  open(REFI, "ls -l ".$ref_dir."/*.fai 2> /dev/null | "); 
+  $refi.=<REFI>;
+  if ($refg eq "" || $refi eq "") {
     die "\nERROR : reference genome is not found check configuration file, conf.pm \n";
   }
   open(CCDSF, "ls -l ".$conf::config::CCDS_file." 2> /dev/null | "); 
@@ -995,10 +999,10 @@ sub get_sample {
 sub parsevcf2{
     my ($vcf,$seq_hash,$seq_hash1,$seq_hash2,$seq_ref1,$seq_ref2,$sample,$clin,$gene) = @_;
     if ($vcf =~ /.gz$/) {
-      open(IN, "gunzip -c $vcf |") || die "canÂ’t open pipe to $vcf";
+      open(IN, "gunzip -c $vcf |") || die "can’t open pipe to $vcf";
     }
     else {
-      open(IN, $vcf) || die "canÂ’t open $vcf";
+      open(IN, $vcf) || die "can’t open $vcf";
     }
     #open VCF, $vcf;
     my @variant = <IN>;
@@ -1127,7 +1131,7 @@ sub parsevcf2{
 					}
 				}
 				else {
-					#print "\n c'est une dÃ©lÃ©tion ";
+					#print "\n c'est une délétion ";
 					for ($i=0; $i<length($fich1[3]); $i++) {
               if ($i<=((length($ALT))-1)) {
                 $mut_hash{$fich1[0]}{$variant_pos+$i}{"hap1"}{"vcf"}=$fich1[0].":".$fich1[1]." ".$fich1[3].">".$ALT; 
@@ -1211,7 +1215,7 @@ sub parsevcf2{
 					}
 				}
 				else {
-					#print "\n c'est une dÃ©lÃ©tion ";
+					#print "\n c'est une délétion ";
 					for ($i=0; $i<length($fich1[3]); $i++) {
               if ($i<=((length($ALT))-1)) {
                 $mut_hash{$fich1[0]}{$variant_pos+$i}{"hap2"}{"vcf"}=$fich1[0].":".$fich1[1]." ".$fich1[3].">".$ALT; 

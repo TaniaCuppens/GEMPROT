@@ -341,11 +341,11 @@ foreach $gene_line (@gene_id){
 		print "\n==> RUN VCFTOOLS \n";
    if ($in_phased =~ /.gz$/) {
     print "gzip vcf \n";
-      system($conf::config::vcftools." --gzvcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased." > /dev/null 2>&1");
+      system($conf::config::vcftools." --gzvcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased." > ".$tmp_dir."/vcftools.out 2> ".$tmp_dir."/vcftools.r");
       #print "system($conf::config::vcftools_bin_dir./vcftools --gzvcf .$in_phased. --recode --from-bp .$gene_start. --to-bp .$gene_stop. --chr .$chr. --out .$select_phased. > /dev/null 2>&1";
     }
     else {
-      system($conf::config::vcftools." --vcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased." > /dev/null 2>&1");
+      system($conf::config::vcftools." --vcf ".$in_phased." --recode --from-bp ".$gene_start." --to-bp ".$gene_stop." --chr ".$chr." --out ".$select_phased." > ".$tmp_dir."/vcftools.out 2> ".$tmp_dir."/vcftools.r");
       #print "system($conf::config::vcftools_bin_dir./vcftools --vcf .$in_phased. --recode --from-bp .$gene_start. --to-bp .$gene_stop. --chr .$chr. --out .$select_phased. > /dev/null 2>&1";
     }
 
@@ -376,7 +376,7 @@ foreach $gene_line (@gene_id){
 				$nb_exon+=1;
 				# Keep exon sequence 
 				######################
-				open(SAMTOOLS, $conf::config::samtools." faidx ".$conf::config::genome_reference." ".$fich1[0].":".$start."-".$stop." | grep -v \">\" | tr -d \"\\n\" |"); 
+				open(SAMTOOLS, $conf::config::samtools." faidx ".$conf::config::genome_reference." ".$fich1[0].":".$start."-".$stop." 2> ".$tmp_dir."/samtools.r | grep -v \">\" | tr -d \"\\n\" |"); 
 				while (my $seqall=<SAMTOOLS>) {
 			 
 					for my $s (split "", $seqall){
