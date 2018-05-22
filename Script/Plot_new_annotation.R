@@ -331,8 +331,8 @@ if (ndomain_out!=0){
 }
 
 legend ("topleft", legend = (as.character(pd[1,1])) , box.col="white", bg="white", cex=0.8)
-legend("bottomright", c("mismatch", "synonymous", "stop", "elongation", "deletion", "insertion"), 
-      pch = c(19, 1, 8, 13, 17, 6), box.col="white", bg="white", cex=0.8)
+legend("bottomright", c("mismatch", "synonymous", "stop", "elongation", "deletion", "insertion", "start-loss"), 
+      pch = c(19, 1, 8, 13, 17, 6, 4), box.col="white", bg="white", cex=0.8)
 #legend("bottomright", legend =c("Protein Domain", nameOfYourQuery,"Haplotype1","Haplotype2"), fill = c("palegreen3", "black","blue2","indianred3"), box.col="white", bg="white", cex=0.7)
 #dev.off()
 
