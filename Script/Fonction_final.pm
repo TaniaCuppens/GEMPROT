@@ -1783,7 +1783,7 @@ sub get_url_pfam {
     if (!-e $pfam_store_file) {
         #no pfam_store file
         open PSF, ">>".$pfam_store_file;
-        #tludwig open file only here
+        #tludwig open file only here 
 		#printf "Existe pas Release_date= ".$date_release ."\n";
         print PSF "Release_date=".$date_release."\n";
         print PSF "Gene\tDomaine\tStart\tEnd\tAccession\n";
