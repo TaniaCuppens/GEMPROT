@@ -796,18 +796,18 @@ sub Indiv {
 				
 				######################
                 $sequence_prot1 = Fonction::translate($sequence1, $sequence_gene_prot1, $sequence_name,$fa_opt);
-                #print " ###########sequence 1 \n".$sequence1." \n";
+                print " ###########sequence 1 \n".$sequence1." \n";
 
                 $sequence_prot2 = Fonction::translate($sequence2, $sequence_gene_prot2, $sequence_name,$fa_opt);
-                #print " ###########sequence 1 \n".$sequence1." \n";
+                print " ###########sequence 2 \n".$sequence2." \n";
                 $sequence_protref1 = Fonction::translate($sequenceref1, $sequence_gene_refbis, $sequence_name,$fa_opt);
-                #print " ###########sequence 1 \n".$sequenceref1." \n";
+                print " ###########sequence ref 1 \n".$sequenceref1." \n";
                 $sequence_protref2= Fonction::translate($sequenceref2, $sequence_gene_refbis, $sequence_name,$fa_opt);
-                #print " ###########sequence 1 \n".$sequenceref2." \n";
+                print " ###########sequence ref 2 \n".$sequenceref2." \n";
 				#my ($sequence_ALref1,$sequence_ALprot1)=Fonction::Sequence_comparaison($sequence_protref1, $sequence_prot1);
 				#my ($sequence_ALref2,$sequence_ALprot2)=Fonction::Sequence_comparaison($sequence_protref2, $sequence_prot2);
 
-                system("rm ".$sequence_gene_refbis);
+                #system("rm ".$sequence_gene_refbis);
                 my $mut_1;
                 my $mut_2;
                 my %hash_mut_type1;
@@ -816,9 +816,9 @@ sub Indiv {
                 my ($mut_info2, $mut_2b, $mut_type2)=Fonction::prot_modif_type($sequence_protref2,$sequence_prot2,\%mut_hap_aa,$syn_opt,$chr,'hap2');
                 %hash_mut_type1=%$mut_type1;
                 %hash_mut_type2=%$mut_type2;
-                #printf $mut_1b." mut_1b\n";
-				#printf $mut_2b." mut_2b\n";
-				#printf $sample." sample\n";
+                printf $mut_1b." mut_1b\n";
+				printf $mut_2b." mut_2b\n";
+				printf $sample." sample\n";
 
                 if (defined $dif_hap {
                     $gene
@@ -907,7 +907,7 @@ sub Indiv {
                     $nb_hap_tot+=1;
                 }
                 print HTMLS "<tr><td><a href=Visual/".$sample."_".$gene."_result.html>".$sample."</a></td><td class=\"haplotype\">$mut_1b</td><td class=\"haplotype\">$mut_2b</td>";
-                #print Dumper (\%dif_hap);
+                print Dumper (\%dif_hap);
                 my $sample_mut_file = $tmp_dir.$gene.".mutation_by_hap_".$sample.".txt";
                 open SMF, ">".$sample_mut_file;
                 print SMF "Hap\tGene\tPosition\tRef\tAlt\tType\tStyle\tColor\n";
@@ -925,7 +925,7 @@ sub Indiv {
                         print SMF $mut_info2.",hap2\t".$gene."\t".$lmut2[1]."\t".$lmut2[0]."\t".$lmut2[2]."\t".$lmut2[3]."\t".$lmut2[4]."\t".$lmut2[5]."\n";
                     }
                 }
-                system("Rscript ".$rep_script."/Plot_new_annotation.R -m ".$sample_mut_file." -d ".$dom_file." -l ".$aa_pos." -p ".$V_dir."/".$gene."_".$sample." -s yes > /dev/null 2>&1");
+                system("Rscript ".$rep_script."/Plot_new_annotation.R -m ".$sample_mut_file." -d ".$dom_file." -l ".$aa_pos." -p ".$V_dir."/".$gene."_".$sample." -s yes > ".$tmp_dir."/Rscript.out 2> ".$tmp_dir."/Rscript.err");
                 #print "Rscript Plot_new_annotation.R -m ".$sample_mut_file." -d ".$dom_file." -l ".$aa_pos." -p ".$V_dir."/".$gene."_".$sample." -s yes\n";
                 my $pdf= $gene."_".$sample."_protein_plot.pdf";
                 Fonction::html_file($chr, $aa_pos, $htlm_file, $pdf, $nb1, $nb2, $syn_opt, \%mut_hap, \%hash_mut_type1, \%hash_mut_type2, \%clin_hash);

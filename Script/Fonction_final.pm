@@ -338,7 +338,7 @@ sub translate {
 		#print $codon."\n";
 		if ($codon=~m/-/){
 			#print "il y a une deletion $codon\n";
-			while ($codon =~ /-/g && length($aa)<3 && $pos<(length($seq)-2)) {
+			while ($codon =~ /-/g && length($aa)<3 && $pos<(length($seq))) {
 				$x++;
 				$del++;
 				$codon=substr($seq,$i,3+$x);
@@ -474,6 +474,9 @@ sub codon2aa {
             $codon
         };
     }
+    elsif(length($codon)<3) {
+       return "?";
+    }
     elsif($codon=~m/,/) {
         print STDERR "\n########\n verify your input, only work on bi-allelic SNP and indel file !! \n########\n";
         exit;
@@ -485,9 +488,9 @@ sub codon2aa {
 }
 sub aa2properties {
     my($aa)=@_;
-    #chomp $aa;
+    chomp $aa;
     $aa=uc $aa;
-    my(%p)=('G'=>'smallest amino acid, aliphatic, no charge, not hydrophilic (0.67)', 'A'=>'no charge, aliphatic, hydrophobic (1.0)' , 'V'=>'no charge, aliphatic, hydrophobic (2.3) ', 'L'=>'no charge, aliphatic, hydrophobic (2.2), isomer of isoleucine (I)', 'I'=>'no charge, aliphatic, hydrophobic (3.1), isomer of leucine (L)', 'P'=>'no charge, aliphatic, promotes turns, cyclic, not hydrophobic (-0.29) ', 'F'=>'no charge, aromatic, absorbs UV, hydrophobic (2.5)', 'Y'=> 'weak charge, aromatic, absorbs UV, hydrogen bonding, not hydrophilic (0.08) ', 'W'=> 'largest amino acid and rarest amino acid, no charge, aromatic, absorbs UV, hydrogen bonding, hydrophobic (1.5)', 'S'=>'no charge, polar, hydrogen bonding, hydrophilic (-1.1)', 'T'=>'no charge, polar, hydrogen bonding, hydrophilic (-0.75)', 'N'=>'amide of Aspartate (D), polar, hydrogen bonding, no charge, hydrophilic (-2.7)', 'Q'=>'amide of Glutamate (E), polar, hydrogen bonding, no charge, hydrophilic (-2.9)', 'C'=>'Sulfur analog of Serine(S), weak charge, forms disulfide bonds, not hydrophilic (0.17)', 'M'=>'initiator of proteins, containing Sulfur, no charge, hydrophobic (1.1)' , 'D'=>'acidic, negative charge, hydrophilic (-3.0)', 'E'=>'acidic, negative charge, hydrophilic (-3.0)', 'H'=>'imidizole in side chain, basic, reactive, weak positive charge, hydrophilic (-1.7)' , 'K'=> 'amine in side chain, basic, reactive, strong positive charge, hydrophilic (-4.6)' , 'R'=> 'guanidinium side chain, basic, strongest positive charge, hydrophilic (-7.5)', '*'=>'stop' , '-'=>'deletion');
+    my(%p)=('G'=>'smallest amino acid, aliphatic, no charge, not hydrophilic (0.67)', 'A'=>'no charge, aliphatic, hydrophobic (1.0)' , 'V'=>'no charge, aliphatic, hydrophobic (2.3) ', 'L'=>'no charge, aliphatic, hydrophobic (2.2), isomer of isoleucine (I)', 'I'=>'no charge, aliphatic, hydrophobic (3.1), isomer of leucine (L)', 'P'=>'no charge, aliphatic, promotes turns, cyclic, not hydrophobic (-0.29) ', 'F'=>'no charge, aromatic, absorbs UV, hydrophobic (2.5)', 'Y'=> 'weak charge, aromatic, absorbs UV, hydrogen bonding, not hydrophilic (0.08) ', 'W'=> 'largest amino acid and rarest amino acid, no charge, aromatic, absorbs UV, hydrogen bonding, hydrophobic (1.5)', 'S'=>'no charge, polar, hydrogen bonding, hydrophilic (-1.1)', 'T'=>'no charge, polar, hydrogen bonding, hydrophilic (-0.75)', 'N'=>'amide of Aspartate (D), polar, hydrogen bonding, no charge, hydrophilic (-2.7)', 'Q'=>'amide of Glutamate (E), polar, hydrogen bonding, no charge, hydrophilic (-2.9)', 'C'=>'Sulfur analog of Serine(S), weak charge, forms disulfide bonds, not hydrophilic (0.17)', 'M'=>'initiator of proteins, containing Sulfur, no charge, hydrophobic (1.1)' , 'D'=>'acidic, negative charge, hydrophilic (-3.0)', 'E'=>'acidic, negative charge, hydrophilic (-3.0)', 'H'=>'imidizole in side chain, basic, reactive, weak positive charge, hydrophilic (-1.7)' , 'K'=> 'amine in side chain, basic, reactive, strong positive charge, hydrophilic (-4.6)' , 'R'=> 'guanidinium side chain, basic, strongest positive charge, hydrophilic (-7.5)', '*'=>'stop' , '-'=>'deletion', '?'=>'elongation');
     if(exists $p {
         $aa
     }
@@ -514,6 +517,8 @@ sub prot_modif_type {
     $i++) {
         my $aaref=substr($sequence_protref,$i,1);
         my $aamut=substr($sequence_prot,$i,1);
+        chomp $aaref;
+        chomp $aamut;
         my $pos = $i;
         $pos+=1;
         # print $pos."position###\n";
@@ -3181,7 +3186,7 @@ sub parsevcf2 {
                                     ]} {
                                         $variant_pos+$i_inf
                                     }
-                                    = $seq_hash_hap1 {
+                                    = $seq_hash_hap2 {
                                         $fich1[
                                     0
                                     ]} {
@@ -3425,8 +3430,8 @@ sub parsevcf2 {
     }
     close IN;
     #print "$mut_nb1 mutation in hap1 and $mut_nb2 mutation in hap2 \n";
-	#print Dumper (\%mut_hash);
-	#print Dumper (\%mut_hash_pos);
+	print Dumper (\%mut_hash);
+	print Dumper (\%mut_hash_pos);
     return (\%seq_hash_hap1, \%seq_hash_hap2, \%seq_hash_ref1, \%seq_hash_ref2, \%mut_hash, \%mut_hash_pos, $mut_nb1, $mut_nb2);
 }
 #tludwig is the following line normal  ?

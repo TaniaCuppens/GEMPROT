@@ -866,7 +866,7 @@ sub Pop {
                             print HMF $mut_info2.",hap1\t".$gene."\t".$lmut2[1]."\t".$lmut2[0]."\t".$lmut2[2]."\t".$lmut2[3]."\t".$lmut2[4]."\tblue2\n";
                         }
                     }
-                    system("Rscript ".$rep_script."/Plot_new_annotation.R -m ".$hap_mut_file." -d ".$dom_file." -l ".$aa_pos." -p ".$V_dir."/".$gene."_".$mut_2b." -s yes -a pop > /dev/null 2>&1");
+                    system("Rscript ".$rep_script."/Plot_new_annotation.R -m ".$hap_mut_file." -d ".$dom_file." -l ".$aa_pos." -p ".$V_dir."/".$gene."_".$mut_2b." -s yes -a pop > ".$tmp_dir."/Rscript.out 2> ".$tmp_dir."/Rscript.err");
                     # print "Rscript ".$rep_script."/Plot_new_annotation.R -m ".$hap_mut_file." -d ".$dom_file." -l ".$aa_pos." -p ".$V_dir."/".$gene."_".$mut_2b." -s yes -a pop \n";
                     close HMF;
                 }
