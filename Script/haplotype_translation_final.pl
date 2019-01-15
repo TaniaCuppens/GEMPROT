@@ -10,6 +10,7 @@ use Scalar::Util qw(looks_like_number);
 use vars qw(%Cmdline $usage);
 use File::Basename;
 use File::Glob;
+
 # ':bsd_glob';
 use Term::ANSIColor;
 use FindBin qw($Bin);
@@ -18,11 +19,11 @@ use conf::config;
 use Fonction_final;
 use Pop;
 use Indiv;
-my $cmdAndArgs = join (' ', $0, @ARGV);
-my $basename = basename $0;
+my $cmdAndArgs = join( ' ', $0, @ARGV );
+my $basename   = basename $0;
 my $rep_script = dirname $0;
-my $mode="";
-my $usage="
+my $mode       = "";
+my $usage      = "
 2 modes :
 	-indiv
 		MANDATORY:
@@ -38,7 +39,7 @@ my $usage="
 		--gene | --gene-file	: official gene symbol or official gene symbol with one ccds in tab delimited file (ex: TP53	CCDS11118.1)
 		
 \n";
-my $opt="
+my $opt = "
     OPTIONAL:
     --loc-file	: location file
             --fasta : if you want protein fasta file for each haplotype and reference
@@ -47,77 +48,64 @@ my $opt="
 		-h	: show this message and quit
 		
 \n";
+
 # Parse command line
 #####################
 sub CmdLineParser () {
-    Getopt::Long::Configure( "no_ignorecase" );
+    Getopt::Long::Configure("no_ignorecase");
+
     #case sensistive
-	GetOptions( \%Cmdline,
-	"indiv",
-	"pop",
-	"phased-vcf=s",
-	"output-dir=s",
-	"sample-file=s",
-	"sample=s",
-	"gene-file=s",
-	"gene=s",
-	"loc-file=s",
-	"synonymous",
-	"fasta",
-	"domain",
-	# help
-	"h"
+    GetOptions(
+        \%Cmdline,
+        "indiv",
+        "pop",
+        "phased-vcf=s",
+        "output-dir=s",
+        "sample-file=s",
+        "sample=s",
+        "gene-file=s",
+        "gene=s",
+        "loc-file=s",
+        "synonymous",
+        "fasta",
+        "domain",
+
+        # help
+        "h"
     ) || die "$!\n";
-    if  (defined $Cmdline {
-        h
-    }
-    ) {
-        printf colored(['yellow'], $usage);
-        printf colored(['grey15'], $opt);
-        $Cmdline {
-            "output-dir"
-        }
-        = $rep_script."/cache/";
+    if ( defined $Cmdline{ h } ) {
+        printf colored( ['yellow'], $usage );
+        printf colored( ['grey15'], $opt );
+        $Cmdline{ "output-dir" } = $rep_script . "/cache/";
         exit 0;
     }
-    if (defined $Cmdline {
-        indiv
-    }
-    ) {
+    if ( defined $Cmdline{indiv} ) {
         $mode = "indiv";
-        print "Entering in --".$mode." GEMPROT mode\n";
+        print "Entering in --" . $mode . " GEMPROT mode\n";
     }
-    elsif (defined $Cmdline {
-        pop
-    }
-    ) {
+    elsif ( defined $Cmdline{pop} ) {
         $mode = "pop";
-        print "Entering in --".$mode." GEMPROT mode\n";
+        print "Entering in --" . $mode . " GEMPROT mode\n";
     }
     else {
         $mode = "indiv";
-        print "Entering in --".$mode." GEMPROT mode\n";
+        print "Entering in --" . $mode . " GEMPROT mode\n";
     }
 }
 CmdLineParser();
 Fonction::checkfileconfig;
-if ($mode eq "pop") {
-    Pop::Pop(\%Cmdline);
+if ( $mode eq "pop" ) {
+    Pop::Pop( \%Cmdline );
 }
-elsif ($mode eq "indiv") {
-    Indiv::Indiv(\%Cmdline);
+elsif ( $mode eq "indiv" ) {
+    Indiv::Indiv( \%Cmdline );
 }
 else {
     exit;
 }
-system("touch ".$Cmdline {
-    "output-dir"
-}
-."/tmp/OK");
+system( "touch " . $Cmdline{ "output-dir" } . "/tmp/OK" );
+
 END {
-    system("touch ".$Cmdline {
-        "output-dir"
-    }
-    ."/tmp/OK")
-};
+    system( "touch " . $Cmdline{ "output-dir" } . "/tmp/OK" );
+}
 printf "\nDONE \n";
