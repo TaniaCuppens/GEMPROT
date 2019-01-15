@@ -3430,8 +3430,8 @@ sub parsevcf2 {
     }
     close IN;
     #print "$mut_nb1 mutation in hap1 and $mut_nb2 mutation in hap2 \n";
-	print Dumper (\%mut_hash);
-	print Dumper (\%mut_hash_pos);
+	#print Dumper (\%mut_hash);
+	#print Dumper (\%mut_hash_pos);
     return (\%seq_hash_hap1, \%seq_hash_hap2, \%seq_hash_ref1, \%seq_hash_ref2, \%mut_hash, \%mut_hash_pos, $mut_nb1, $mut_nb2);
 }
 #tludwig is the following line normal  ?
