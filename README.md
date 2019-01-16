@@ -138,5 +138,7 @@ Tania Cuppens
 
 Email: tania.cuppens@inserm.fr
 
-## License Agreement
+## Publication
+If you have used Gemprot in a scientific publication, we would appreciate citations to the following paper:
 
+Cuppens, T., Ludwig, T. E., Trouvé, P., & Genin, E. (2018). GEMPROT: visualization of the impact on the protein of the genetic variants found on each haplotype. [Bioinformatics](https://doi.org/10.1093/bioinformatics/bty993)
