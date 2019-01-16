@@ -14,7 +14,7 @@ GEMPROT proposes two different modes: the first mode outputs both sequences for 
 -	[GEMPROT Output](#GEMPROT-Output)
 -	[RunExamples](#RunExamples)
 -	[Contact Information](#Contact-Information)
--	[License Agreement](#License-Agreement)
+-	[Publication](#Publication)
 
 ## Dependencies
 
