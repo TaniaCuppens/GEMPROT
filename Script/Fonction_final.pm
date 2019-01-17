@@ -670,17 +670,19 @@ sub prot_modif_type {
                         $hash_mut_type{ $pos - 1 }{ "frameshift" } = -1;
                     }
                 }
-                elsif ($hash_mut_type{ $pos - 2 }{ "type" } eq "mismatch"
-                    && $hash_mut_type{ $pos - 2 }{ "type" } ne "synonymous"
-                    && !defined $mut_hash_aa{ $nhap }{ $pos } )
-                {
-                    $hash_mut_type{ $pos - 1 }{ "frameshift" } =
-                      $hash_mut_type{ $pos - 2 }{ "frameshift" } + 1;
-                    $hash_mut_type{ $pos }{ "frameshift" } =
-                      $hash_mut_type{ $pos - 2 }{ "frameshift" } + 2;
-                    if ( $hash_mut_type{ $pos - 2 }{ "frameshift" } == 0 ) {
-                        $hash_mut_type{ $pos - 2 }{ "frameshift" } = -1;
-                    }
+                elsif ( defined $hash_mut_type{ $pos - 2 }{ "type" } ) {
+                    if ($hash_mut_type{ $pos - 2 }{ "type" } eq "mismatch"
+                        && $hash_mut_type{ $pos - 2 }{ "type" } ne "synonymous"
+                        && !defined $mut_hash_aa{ $nhap }{ $pos } )
+                    {
+                        $hash_mut_type{ $pos - 1 }{ "frameshift" } =
+                        $hash_mut_type{ $pos - 2 }{ "frameshift" } + 1;
+                        $hash_mut_type{ $pos }{ "frameshift" } =
+                        $hash_mut_type{ $pos - 2 }{ "frameshift" } + 2;
+                      if ( $hash_mut_type{ $pos - 2 }{ "frameshift" } == 0 ) {
+                          $hash_mut_type{ $pos - 2 }{ "frameshift" } = -1;
+                      }
+                }
                 }
                 $nb_diff++;
             }
@@ -692,7 +694,10 @@ sub prot_modif_type {
 
     #print Dumper (\%hash_mut_type);
     #print Dumper ($hash_mut_type{1});
-    #print Dumper ($hash_mut_type{0});
+    if (defined $hash_mut_type{0}) {
+      delete $hash_mut_type{0};
+    }
+    
     if ( $nb_diff != 0 ) {
         $haplo      = "";
         $info_haplo = "";
@@ -787,6 +792,7 @@ sub prot_modif_type {
             #print $m." ".Dumper(\$hash_mut_type{$m})."\n";
         }
     }
+    
     return ( $info_haplo, $haplo, \%hash_mut_type );
 }
 
@@ -1914,7 +1920,7 @@ sub parsevcf2 {
     }
     close IN;
 
-    #print "$mut_nb1 mutation in hap1 and $mut_nb2 mutation in hap2 \n";
+    #print "\n\n$mut_nb1 mutation in hap1 and $mut_nb2 mutation in hap2 \n";
     #print Dumper (\%mut_hash);
     #print Dumper (\%mut_hash_pos);
     return (
