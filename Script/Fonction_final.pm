@@ -64,194 +64,173 @@ sub checkfileconfig {
     }
 }
 
-sub clinvartohash {
-    my ( $chr, $with_chr ) = @_;
-    my @CLNORIGIN;
-    my @CLNSIG;
-    my @VC;
-    my @CLNDBN;
-    my @ALT;
-    my @IDRS;
-    my @info;
-    my ( $CHROM, $POS, $ID, $REF, $ALTS, $QUAL, $FILTER, $INFO );
-    my $nb_clin_alt;
+sub clinvartohash{
+	my ($chr, $with_chr)=@_;
+	my @CLNORIGIN;
+	my @CLNSIG;
+	my @VC;
+	my @CLNDBN;
+	my @ALT;
+  my @IDRS;
+  my @info;
+  my ($CHROM,	$POS, $ID, $REF, $ALTS, $QUAL, $FILTER, $INFO);
+  my $nb_clin_alt;
+	#print $chr."\n\n";
+	my @clin_chr=`zgrep -w "^$chr" $conf::config::clin_var`;
+	#open CLI, "/home/tcuppens/working_directory/Shapeit/update/clintest.vcf";
+	#my @clin_chr=<CLI>;
+	#print Dumper (\@clin_chr); 
+	my %table;
+  my $nb_alt=0;
+	foreach my $l (@clin_chr) {
+	    #print $l;
+	    my ($CHROM,	$POS, $ID, $REF, $ALTS, $QUAL, $FILTER, $INFO) = split(/\t/, $l);
+     if ($with_chr eq "yes") {
+       $CHROM = "chr".$CHROM;
+     }
+      @ALT=split(/,/, $ALTS);
+      @info = split(/;/, $INFO);   
+      if (defined $table{$CHROM}{$POS}) {
+        #printf $l."\n";
+          $nb_alt+=1;
+          $table{$CHROM}{$POS}{"HGVS".$nb_alt} = {
+	    						ID => $ID,	
+	                            REF  => $REF,
+	                            QUAL  => $QUAL,
+	                            FILTER => $FILTER,
+                              ALT => $ALTS                           
+	                           };
+          foreach my $id_info (@info){
+          if ($id_info=~ /^CLNHGVS/){
+			        my @CLNHGVS = split(/=/, $id_info);
+		        	$table{$CHROM}{$POS}{"HGVS".$nb_alt}{"NC"} =$CLNHGVS[1];
+          }
+          if ($id_info=~ /^RS=/){ 
+	    					# CLNORIGIN CLNSIG VC CLNDBN
+	    					@IDRS = split(/=/, $id_info);
+	    					#print Dumper (\@CLNORIGIN);
+	    					$table{$CHROM}{$POS}{"HGVS".$nb_alt}{"RS"}= "rs".$IDRS[1];
+							
+						
+          }
+					elsif ($id_info=~ /^CLNORIGIN/){ 
+	    					# CLNORIGIN CLNSIG VC CLNDBN
+	    					@CLNORIGIN = split(/=/, $id_info);
+	    					#print Dumper (\@CLNORIGIN);
+	    					$table{$CHROM}{$POS}{"HGVS".$nb_alt}{"CLNORIGIN"}= $CLNORIGIN[1];
+						
+						}
+	    		
+	    					
+	    				elsif ($id_info=~ /^CLNSIG/){ 
+	    					# CLNORIGIN CLNSIG VC CLNDBN
+	    					@CLNSIG = split(/=/, $id_info);
+	    					#print Dumper (\@CLNSIG);
+	    					$table{$CHROM}{$POS}{"HGVS".$nb_alt}{"CLNSIG"} = $CLNSIG[1];
+							}	
+	    
 
-    #print $chr."\n\n";
-    my @clin_chr = `zgrep -w "^$chr" $conf::config::clin_var`;
+					elsif ($id_info=~ /^CLNDBN/ || $id_info=~ /^CLNDN/){ 
+	    					# CLNORIGIN CLNSIG VC CLNDBN
+	    					@CLNDBN = split(/=/, $id_info);
+	    					#print Dumper (\@CLNSIG);
+	    					$table{$CHROM}{$POS}{"HGVS".$nb_alt}{"CLNDBN"}= $CLNDBN[1];
+						
+	    				}
 
-    #open CLI, "/home/tcuppens/working_directory/Shapeit/update/clintest.vcf";
-    #my @clin_chr=<CLI>;
-    #print Dumper (\@clin_chr);
-    my %table;
-    my $nb_alt = 0;
-    foreach my $l (@clin_chr) {
-
-        #print $l;
-        my ( $CHROM, $POS, $ID, $REF, $ALTS, $QUAL, $FILTER, $INFO ) =
-          split( /\t/, $l );
-        if ( $with_chr eq "yes" ) {
-            $CHROM = "chr" . $CHROM;
-        }
-        @ALT = split( /,/, $ALTS );
-        @info = split(
-            /;
-        /, $INFO
-        );
-        if ( defined $table{ $CHROM }{ $POS } ) {
-
-            #printf $l."\n";
-            $nb_alt += 1;
-            $table{ $CHROM }{ $POS }{ "HGVS" . $nb_alt } = {
-                ID     => $ID,
-                REF    => $REF,
-                QUAL   => $QUAL,
-                FILTER => $FILTER,
-                ALT    => $ALTS
-            };
-            foreach my $id_info (@info) {
-                if ( $id_info =~ /^CLNHGVS/ ) {
-                    my @CLNHGVS = split( /=/, $id_info );
-                    $table{ $CHROM }{ $POS }{ "HGVS" . $nb_alt }{ "NC" } =
-                      $CLNHGVS[1];
-                }
-                if ( $id_info =~ /^RS=/ ) {
-
-                    # CLNORIGIN CLNSIG VC CLNDBN
-                    @IDRS = split( /=/, $id_info );
-
-                    #print Dumper (\@CLNORIGIN);
-                    $table{ $CHROM }{ $POS }{ "HGVS" . $nb_alt }{ "RS" } =
-                      "rs" . $IDRS[1];
-                }
-                elsif ( $id_info =~ /^CLNORIGIN/ ) {
-
-                    # CLNORIGIN CLNSIG VC CLNDBN
-                    @CLNORIGIN = split( /=/, $id_info );
-
-                    #print Dumper (\@CLNORIGIN);
-                    $table{ $CHROM }{ $POS }{ "HGVS" . $nb_alt }{ "CLNORIGIN" }
-                      = $CLNORIGIN[1];
-                }
-                elsif ( $id_info =~ /^CLNSIG/ ) {
-
-                    # CLNORIGIN CLNSIG VC CLNDBN
-                    @CLNSIG = split( /=/, $id_info );
-
-                    #print Dumper (\@CLNSIG);
-                    $table{ $CHROM }{ $POS }{ "HGVS" . $nb_alt }{ "CLNSIG" } =
-                      $CLNSIG[1];
-                }
-                elsif ( $id_info =~ /^CLNDBN/ || $id_info =~ /^CLNDN/ ) {
-
-                    # CLNORIGIN CLNSIG VC CLNDBN
-                    @CLNDBN = split( /=/, $id_info );
-
-                    #print Dumper (\@CLNSIG);
-                    $table{ $CHROM }{ $POS }{ "HGVS" . $nb_alt }{ "CLNDBN" } =
-                      $CLNDBN[1];
-                }
-                elsif ( $id_info =~ /^VC/ ) {
-
-                    # CLNORIGIN CLNSIG VC CLNDBN
-                    @VC = split( /=/, $id_info );
-
-                    #print Dumper (\@CLNSIG);
-                    $table{ $CHROM }{ $POS }{ "HGVS" . $nb_alt }{ "VC" } =
-                      $VC[1];
-                }
+	    				elsif ($id_info=~ /^VC/){ 
+	    					# CLNORIGIN CLNSIG VC CLNDBN
+	    					@VC = split(/=/, $id_info);
+	    					#print Dumper (\@CLNSIG);
+	    					$table{$CHROM}{$POS}{"HGVS".$nb_alt}{"VC"} = $VC[1];
+	    				}
             }
-        }
-        else {
-            $nb_alt = 0;
-            my $nb_clin_alt = 0;
+      }
+     
+     else {
+      $nb_alt=0;
+	    my $nb_clin_alt=0;
+	    #print Dumper (\@info);
+	    foreach my $id_info (@info){
+	    	#print $id_info;
+			if ($id_info=~ /^CLNHGVS/){
+				my @CLNHGVS = split(/=/, $id_info);
+				my @CLNHGVS1=split(/\,/, $CLNHGVS[1]);
+				#print Dumper (\@CLNHGVS1);
+	    		foreach my $id_clnhgvs(@CLNHGVS1){
+                     #print $id_clnhgvs;
+	    			#$table{$CHROM}{$POS}{"HGVS".$nb_clin_alt}{"NC"} =1;#$CLNHGVS1[$nb_clin_alt];
+					$table{$CHROM}{$POS}{"HGVS".$nb_clin_alt} = {
+					NC=> $CLNHGVS1[$nb_clin_alt],
+	    						ID => $ID,	
+	                            REF  => $REF,
+	                            QUAL  => $QUAL,
+	                            FILTER => $FILTER,
+                              ALT => $ALT[$nb_clin_alt]                            
+	                           };                                                                  
+				}
+			}
+		}
+		for (my $i=0;$i<@ALT;$i++){
+			foreach my $id_info (@info){
 
-            #print Dumper (\@info);
-            foreach my $id_info (@info) {
+          if ($id_info=~ /^RS=/){ 
+	    					# CLNORIGIN CLNSIG VC CLNDBN
+	    					@IDRS = split(/=/, $id_info);
+                my @IDRS1=split(/\,/, $IDRS[1]);
+	    					#print Dumper (\@CLNORIGIN);
+	    					$table{$CHROM}{$POS}{"HGVS".$nb_clin_alt}{"RS"}= "rs".$IDRS1[$nb_clin_alt];
+							
+						
+          }
+					elsif ($id_info=~ /^CLNORIGIN/){ 
+	    					# CLNORIGIN CLNSIG VC CLNDBN
+	    					@CLNORIGIN = split(/=/, $id_info);
+                my @CLNORIGIN1=split(/\,/, $CLNORIGIN[1]);
+	    					#print Dumper (\@CLNORIGIN);
+	    					$table{$CHROM}{$POS}{"HGVS".$nb_clin_alt}{"CLNORIGIN"}= $CLNORIGIN1[$nb_clin_alt];
+						
+						}
+	    		
+	    					
+	    				elsif ($id_info=~ /^CLNSIG/){ 
+	    					# CLNORIGIN CLNSIG VC CLNDBN
+	    					@CLNSIG = split(/=/, $id_info);
+                my @CLNSIG1=split(/\,/, $CLNSIG[1]);
+	    					#print Dumper (\@CLNSIG);
+	    					$table{$CHROM}{$POS}{"HGVS".$nb_clin_alt}{"CLNSIG"} = $CLNSIG1[$nb_clin_alt];
+							}	
+	    
 
-                #print $id_info;
-                if ( $id_info =~ /^CLNHGVS/ ) {
-                    my @CLNHGVS  = split( /=/,  $id_info );
-                    my @CLNHGVS1 = split( /\,/, $CLNHGVS[1] );
+					elsif ($id_info=~ /^CLNDBN/ || $id_info=~ /^CLNDN/){ 
+	    					# CLNORIGIN CLNSIG VC CLNDBN
+	    					@CLNDBN = split(/=/, $id_info);
+                my @CLNDBN1=split(/\,/, $CLNDBN[1]);
+	    					#print Dumper (\@CLNSIG);
+	    					$table{$CHROM}{$POS}{"HGVS".$nb_clin_alt}{"CLNDBN"}= $CLNDBN1[$nb_clin_alt];
+						
+	    				}
 
-                    #print Dumper (\@CLNHGVS1);
-                    foreach my $id_clnhgvs (@CLNHGVS1) {
-
-   #print $id_clnhgvs;
-   #$table{$CHROM}{$POS}{"HGVS".$nb_clin_alt}{"NC"} =1;#$CLNHGVS1[$nb_clin_alt];
-                        $table{ $CHROM }{ $POS }{ "HGVS" . $nb_clin_alt } = {
-                            NC     => $CLNHGVS1[$nb_clin_alt],
-                            ID     => $ID,
-                            REF    => $REF,
-                            QUAL   => $QUAL,
-                            FILTER => $FILTER,
-                            ALT    => $ALT[$nb_clin_alt]
-                        };
-                    }
-                }
+	    				elsif ($id_info=~ /^VC/){ 
+	    					# CLNORIGIN CLNSIG VC CLNDBN
+	    					@VC = split(/=/, $id_info);
+                 my @VC1=split(/\,/, $VC[1]);
+	    					#print Dumper (\@CLNSIG);
+	    					$table{$CHROM}{$POS}{"HGVS".$nb_clin_alt}{"VC"} = $VC1[$nb_clin_alt];
+	    				}
             }
-            for ( my $i = 0 ; $i < @ALT ; $i++ ) {
-                foreach my $id_info (@info) {
-                    if ( $id_info =~ /^RS=/ ) {
+           $nb_clin_alt+=1; 
+		
+		}
+				#print Dumper (\%table);	
+		
+   }
+	} 
+	#print Dumper (\%table);
+	return %table;
 
-                        # CLNORIGIN CLNSIG VC CLNDBN
-                        @IDRS = split( /=/, $id_info );
-                        my @IDRS1 = split( /\,/, $IDRS[1] );
-
-                        #print Dumper (\@CLNORIGIN);
-                        $table{ $CHROM }{ $POS }{ "HGVS" . $nb_clin_alt }
-                          { "RS" } = "rs" . $IDRS1[$nb_clin_alt];
-                    }
-                    elsif ( $id_info =~ /^CLNORIGIN/ ) {
-
-                        # CLNORIGIN CLNSIG VC CLNDBN
-                        @CLNORIGIN = split( /=/, $id_info );
-                        my @CLNORIGIN1 = split( /\,/, $CLNORIGIN[1] );
-
-                        #print Dumper (\@CLNORIGIN);
-                        $table{ $CHROM }{ $POS }{ "HGVS" . $nb_clin_alt }
-                          { "CLNORIGIN" } = $CLNORIGIN1[$nb_clin_alt];
-                    }
-                    elsif ( $id_info =~ /^CLNSIG/ ) {
-
-                        # CLNORIGIN CLNSIG VC CLNDBN
-                        @CLNSIG = split( /=/, $id_info );
-                        my @CLNSIG1 = split( /\,/, $CLNSIG[1] );
-
-                        #print Dumper (\@CLNSIG);
-                        $table{ $CHROM }{ $POS }{ "HGVS" . $nb_clin_alt }
-                          { "CLNSIG" } = $CLNSIG1[$nb_clin_alt];
-                    }
-                    elsif ( $id_info =~ /^CLNDBN/ || $id_info =~ /^CLNDN/ ) {
-
-                        # CLNORIGIN CLNSIG VC CLNDBN
-                        @CLNDBN = split( /=/, $id_info );
-                        my @CLNDBN1 = split( /\,/, $CLNDBN[1] );
-
-                        #print Dumper (\@CLNSIG);
-                        $table{ $CHROM }{ $POS }{ "HGVS" . $nb_clin_alt }
-                          { "CLNDBN" } = $CLNDBN1[$nb_clin_alt];
-                    }
-                    elsif ( $id_info =~ /^VC/ ) {
-
-                        # CLNORIGIN CLNSIG VC CLNDBN
-                        @VC = split( /=/, $id_info );
-                        my @VC1 = split( /\,/, $VC[1] );
-
-                        #print Dumper (\@CLNSIG);
-                        $table{ $CHROM }{ $POS }{ "HGVS" . $nb_clin_alt }
-                          { "VC" } = $VC1[$nb_clin_alt];
-                    }
-                }
-                $nb_clin_alt += 1;
-            }
-
-            #print Dumper (\%table);
-        }
-    }
-
-    #print Dumper (\%table);
-    return %table;
 }
+
 
 # Translation
 ############
@@ -296,11 +275,14 @@ sub translate {
                 #print "c'est une deletion de + de 3 nt\n";
                 my $j;
                 $protein .= &codon2aa($aa);
-                for ( $j = 1 ; $j <= $del / 3 ; $j++ ) {
+                if ($pos < ( length($seq) - 2 )){
+                  for ( $j = 1 ; $j <= $del / 3 ; $j++ ) {
                     $protein .= "-";
-                }
+                  }
+                
                 $i = $i + $x;
                 $del = $del - ( ( $j - 1 ) * 3 );
+                }
             }
             elsif ( $pos > ( length($seq) - 2 ) ) {
                 my $prot = $protein;
@@ -527,6 +509,8 @@ sub aa2properties {
 sub prot_modif_type {
     my ( $sequence_protref, $sequence_prot, $mut_hash, $syn, $chrom, $nhap ) =
       @_;
+      #print $sequence_protref." reference protein \n";
+      #print $sequence_prot." mutated protein \n";
     my $color     = "green";
     my $genomique = 0;
     my %hash_mut_type;
