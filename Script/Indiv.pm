@@ -27,7 +27,6 @@ sub Indiv {
     my $gene_file   = "";
     my $g           = "";
     my $s           = "";
-    my $assembly    = "";
     my $domain_file = "";
     my $phas        = "";
     my $phased_vcf  = "";
@@ -137,17 +136,6 @@ sub Indiv {
             die "########\nNo such gene-file\n########\n";
         }
     }
-    
-    if ( !defined( $Cmdline{ "assembly" } && $Cmdline{ "assembly" } !~ ["GRCh38", "hg38", "GRCh37", "hg19"]) ) {
-        die "########\nPlease entry genome assembly [GRCh38, hg38, GRCh37, hg19]\n########\n";
-    }
-    else {
-      $assembly = $Cmdline{ "assembly" };
-      delete $Cmdline{ "assembly" };
-        }
-    
-    
-    
     if ( !defined( $Cmdline{ "domain" } ) ) {
         $domain_opt = 'no';
     }
@@ -709,12 +697,12 @@ sub Indiv {
                   Fonction::translate( $sequence2, $sequence_gene_prot2,
                     $sequence_name, $fa_opt );
 
-                #print " ###########sequence 2 \n".$sequence2." \n";
+                #print " ###########sequence 1 \n".$sequence2." \n";
                 $sequence_protref1 =
                   Fonction::translate( $sequenceref1, $sequence_gene_refbis,
                     $sequence_name, $fa_opt );
 
-                #print " ###########sequence ref \n".$sequenceref1." \n";
+                #print " ###########sequence 1 \n".$sequenceref1." \n";
                 $sequence_protref2 =
                   Fonction::translate( $sequenceref2, $sequence_gene_refbis,
                     $sequence_name, $fa_opt );
@@ -728,16 +716,15 @@ sub Indiv {
                 my $mut_2;
                 my %hash_mut_type1;
                 my %hash_mut_type2;
-                my ( $mut_info1, $mut_1b, $nbr1, $mut_type1 ) =
+                my ( $mut_info1, $mut_1b, $mut_type1 ) =
                   Fonction::prot_modif_type( $sequence_protref1,
                     $sequence_prot1, \%mut_hap_aa, $syn_opt, $chr, 'hap1' );
-                my ( $mut_info2, $mut_2b, $nbr2, $mut_type2 ) =
+                my ( $mut_info2, $mut_2b, $mut_type2 ) =
                   Fonction::prot_modif_type( $sequence_protref2,
                     $sequence_prot2, \%mut_hap_aa, $syn_opt, $chr, 'hap2' );
                 %hash_mut_type1 = %$mut_type1;
                 %hash_mut_type2 = %$mut_type2;
-                $nb1 = $nbr1;
-                $nb2 = $nbr2;
+
                 #printf $mut_1b." mut_1b\n";
                 #printf $mut_2b." mut_2b\n";
                 #printf $sample." sample\n";
@@ -823,8 +810,9 @@ sub Indiv {
 
 #print "Rscript Plot_new_annotation.R -m ".$sample_mut_file." -d ".$dom_file." -l ".$aa_pos." -p ".$V_dir."/".$gene."_".$sample." -s yes\n";
                 my $pdf = $gene . "_" . $sample . "_protein_plot.pdf";
-                Fonction::html_file( $chr, $aa_pos, $htlm_file, $pdf, $nb1, $nb2, $syn_opt, \%mut_hap, \%hash_mut_type1,
-                    \%hash_mut_type2, \%clin_hash, \%mut_hap_aa, $assembly);
+                Fonction::html_file( $chr, $aa_pos, $htlm_file, $pdf, $nb1,
+                    $nb2, $syn_opt, \%mut_hap, \%hash_mut_type1,
+                    \%hash_mut_type2, \%clin_hash );
             }
             print HTMLS "</tbody></table></div>";
 
