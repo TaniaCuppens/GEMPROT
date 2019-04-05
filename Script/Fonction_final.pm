@@ -528,6 +528,7 @@ sub prot_modif_type {
 
         # print $pos."position###\n";
         if ( defined $mut_hash_aa{ $nhap }{ $pos } ) {
+          
             $genomique = $mut_hash_aa{ $nhap }{ $pos }{ "vcf" };
 
             # $hash_mut_type{$pos}{"frameshift"}=0;
@@ -777,27 +778,25 @@ sub prot_modif_type {
         }
     }
     
-    return ( $info_haplo, $haplo, \%hash_mut_type );
+    return ( $info_haplo, $haplo, $nb_diff, \%hash_mut_type );
 }
 
 sub html_file {
     my ( $chr, $aa_pos, $htlm_file, $pdf, $nb1, $nb2, $syn, $mut_hash_ref,
-        $hash_mut_type1_ref, $hash_mut_type2_ref, $clin_hash_ref )
-      = @_;
+        $hash_mut_type1_ref, $hash_mut_type2_ref, $clin_hash_ref, $h_mut_pos, $assembly ) = @_;
+      #print "\nLe nombre de mutation sur l'haplotype1 est de ".$nb1." et le nombre de mutation sur l'haplotype1 est de ".$nb2;
     my %mut_hash       = %$mut_hash_ref;
     my %hash_mut_type1 = %$hash_mut_type1_ref;
     my %hash_mut_type2 = %$hash_mut_type2_ref;
     my %clin_hash      = %$clin_hash_ref;
-
+    my %hash_mut_pos      = %$h_mut_pos;
+    my $hap_mut ="";
+	my @position ="";
     #print Dumper(\%mut_hash);
     open HTML, ">>" . $htlm_file;
     print HTML
       "<p class=\"haplomodification\"><h3>Haplotype 1 modifications</h3> \n";
-    if ( $nb1 == 0 ) {
-        print HTML
-"<br><blockquote>No changes from reference sequence\n</blockquote><br>";
-    }
-    else {
+    if ( $nb1 != 0 ) {
         print HTML "<ul class=\"ulmut\">";
         my $prev_gen     = 0;
         my $stop_gen_pos = "no";
@@ -813,16 +812,43 @@ sub html_file {
                       { $hash_mut_type1{ $m }{ "genomique" } }{ 'hap1' }
                       { 'vcf' }
                       . " amino acid position "
-                      . $m
-                      . " \n</li><br><blockquote>";
+                      . $m;
+                      
+                     my @position=split(/ /, $mut_hash{ $chr }{ $hash_mut_type1{ $m }{ "genomique" } }{ 'hap1' }{ 'vcf' });
+					 if ($hap_mut ne ""){
+						 $hap_mut .= ",";
+					  }
+                     if ($assembly !~ ["GRCh37", "GRCh38"]){
+						 $hap_mut .= "chr";
+					  }
+                     $hap_mut .= $position[0];
+					 
+                      if (exists $hash_mut_pos {"hap1"}{ $m }{"phase2"}) {
+                          print HTML "<br>"
+                          . $mut_hash{ $chr }
+                          { $hash_mut_pos {"hap1"}{ $m }{"vcf2"} }{ 'hap1' }
+                          { 'vcf' }
+                          . " amino acid position "
+                          . $m;
+                         my @position=split(/ /, $mut_hash{ $chr }{ $hash_mut_pos {"hap1"}{ $m }{"vcf2"} }{ 'hap1' }{ 'vcf' }); 
+						 if ($assembly !~ ["GRCh37", "GRCh38"]){
+                         $hap_mut .= ",chr"; 
+						 }
+						 $hap_mut .= $position[0];
+                      }
+                      print HTML " \n</li><br><blockquote>";
                     $stop_gen_pos = "no";
                 }
                 my $frame =
                   $mut_hash{ $chr }{ $hash_mut_type1{ $m }{ "genomique" } }
                   { 'hap1' }{ 'amino' };
+
+                
                 if ( $stop_gen_pos eq "yes" ) {
                     next;
                 }
+                
+                
 
 #	print HTML "<br><li>hap 1 ".$chr.":".$chr.$m.":".$mut_hash{$chr}{$m}{'hap1'}{'nt'}." amino acid position ".$mut_hash{$chr}{$m}{'hap1'}{'amino'}." \n</li><br><blockquote>";
                 elsif ( $hash_mut_type1{ $m }{ "frameshift" } == -1 ) {
@@ -877,6 +903,7 @@ sub html_file {
                       . $hash_mut_type1{ $m }{ "type" }
                       . " mutation<br>";
                 }
+                
                 if (
                     exists(
                         $clin_hash{ $chr }
@@ -921,21 +948,30 @@ sub html_file {
                         print HTML "</ul>";
                     }
                     print HTML "</blockquote>";
+                    
                 }
                 print HTML "</blockquote>";
                 $prev_gen = $hash_mut_type1{ $m }{ "genomique" };
             }
         }
+        if ($assembly eq "hg19" || $assembly eq "GRCh37"){
+            print HTML "<a href=http://hg19.cravat.us/MuPIT_Interactive/?gm=".$hap_mut.">See 3D visualisation with MuPIT Interactive</a><br><br>";
+        }
+        else {
+            print HTML "<a href=http://mupit.icm.jhu.edu/MuPIT_Interactive/?gm=".$hap_mut.">See 3D visualisation with MuPIT Interactive</a><br><br>";
+        }
         print HTML "</ul>";
     }
-    print HTML "</p>";
-    print HTML
-      "<p class=\"haplomodification\"><h3>Haplotype 2 modifications </h3> \n";
-    if ( $nb2 == 0 ) {
+	else {
         print HTML
 "<br><blockquote>No changes from reference sequence\n</blockquote><br>";
     }
-    else {
+    
+    print HTML "</p>";
+    print HTML
+      "<p class=\"haplomodification\"><h3>Haplotype 2 modifications </h3> \n";
+      $hap_mut="";
+    if ( $nb2 != 0 ) {
         print HTML "<ul class=\"ulmut\">";
         my $prev_gen2     = 0;
         my $stop_gen_pos2 = "no";
@@ -951,13 +987,40 @@ sub html_file {
                       { $hash_mut_type2{ $m2 }{ "genomique" } }{ 'hap2' }
                       { 'vcf' }
                       . " amino acid position "
-                      . $m2
-                      . " \n</li><br><blockquote>";
+                      . $m2;
+                      
+                      my @position=split(/ /, $mut_hash{ $chr }{ $hash_mut_type2{ $m2 }{ "genomique" } }{ 'hap2' }{ 'vcf' });
+					  if ($hap_mut ne ""){
+						 $hap_mut .= ",";
+					  }
+					  if ($assembly !~ ["GRCh37", "GRCh38"]){
+						 $hap_mut .= "chr";
+					  }
+                     $hap_mut .= $position[0];
+                     
+                      if (exists $hash_mut_pos {"hap2"}{ $m2 }{"phase2"}) {
+                          print HTML "<br>"
+                          . $mut_hash{ $chr }
+                          { $hash_mut_pos {"hap2"}{ $m2 }{"vcf2"} }{ 'hap2' }
+                          { 'vcf' }
+                          . " amino acid position "
+                          . $m2;
+                          
+                          my @position=split(/ /, $mut_hash{ $chr }{ $hash_mut_pos {"hap2"}{ $m2 }{"vcf2"} }{ 'hap2' }{ 'vcf' });
+						  if ($assembly !~ ["GRCh37", "GRCh38"]){
+                         $hap_mut .= ",chr"; 
+						 }
+                        $hap_mut .= $position[0];
+                         
+                      }
+                      print HTML " \n</li><br><blockquote>";
                     $stop_gen_pos2 = "no";
                 }
                 my $frame2 =
                   $mut_hash{ $chr }{ $hash_mut_type2{ $m2 }{ "genomique" } }
                   { 'hap2' }{ 'amino' };
+                  
+                                
                 if ( $stop_gen_pos2 eq "yes" ) {
                     next;
                 }
@@ -1064,9 +1127,21 @@ sub html_file {
                 print HTML "</blockquote>";
                 $prev_gen2 = $hash_mut_type2{ $m2 }{ "genomique" };
             }
+		
         }
+        if ($assembly eq "hg19" || $assembly eq "GRCh37"){
+            print HTML "<a href=http://hg19.cravat.us/MuPIT_Interactive/?gm=".$hap_mut.">See 3D visualisation with MuPIT Interactive</a><br><br>";
+        }
+        else {
+            print HTML "<a href=http://mupit.icm.jhu.edu/MuPIT_Interactive/?gm=".$hap_mut.">See 3D visualisation with MuPIT Interactive</a><br><br>";
+        }           
         print HTML "</ul>";
     }
+	else {
+        print HTML
+"<br><blockquote>No changes from reference sequence\n</blockquote><br>";
+    }
+    
     print HTML "</p>";
     print HTML "<br><object class=\"bigpdf\" data=\""
       . $pdf
@@ -1445,59 +1520,67 @@ sub parsevcf2 {
                 if ( $geno[0] =~ m/\./ ) {
                     $mut_nb1++;
                     $mut_nb2++;
-                    $mut_hash_pos{ "hap1" }
-                      { $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
-                          { "amino" } }{ "phase" } = "missing";
-                    $mut_hash_pos{ "hap1" }
-                      { $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
-                          { "amino" } }{ "vcf" } = $fich1[1];
-                    $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap1" }
-                      { "vcf" } =
-                        $fich1[0] . ":"
-                      . $fich1[1] . " "
-                      . $fich1[3] . ">"
-                      . $fich1[4];
-                    $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap1" }
-                      { "nt" } = $fich1[3] . ">" . $fich1[4];
-                    $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap1" }
-                      { "amino" } =
-                      $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
-                      { "amino" };
-                    $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap1" }
-                      { "exon" } =
-                      $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
-                      { "exon" };
-                    $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap1" }
-                      { "nt_pos" } =
-                      $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
-                      { "nt_pos" };
-                    $mut_hash_pos{ "hap2" }
-                      { $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
-                          { "amino" } }{ "phase" } = "missing";
-                    $mut_hash_pos{ "hap2" }
-                      { $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
-                          { "amino" } }{ "vcf" } = $fich1[1];
-                    $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap2" }
-                      { "vcf" } =
-                        $fich1[0] . ":"
-                      . $fich1[1] . " "
-                      . $fich1[3] . ">"
-                      . $fich1[4];
-                    $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap2" }
-                      { "nt" } = $fich1[3] . ">" . $fich1[4];
-                    $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap2" }
-                      { "amino" } =
-                      $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
-                      { "amino" };
-                    $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap2" }
-                      { "exon" } =
-                      $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
-                      { "exon" };
-                    $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap2" }
-                      { "nt_pos" } =
-                      $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
-                      { "nt_pos" };
+                    if(exists $mut_hash_pos{ "hap1" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase" }) {
+                                          $mut_hash_pos{ "hap1" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase2" } = "missing";
+                                          $mut_hash_pos{ "hap1" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "vcf2" } = $fich1[1];
+                                          $mut_hash_pos{ "hap2" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase2" } = "missing";
+                                          $mut_hash_pos{ "hap2" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "vcf2" } = $fich1[1];
+                    }
+                    else{
+                        $mut_hash_pos{ "hap1" }
+                          { $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
+                              { "amino" } }{ "phase" } = "missing";
+                        $mut_hash_pos{ "hap1" }
+                          { $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
+                              { "amino" } }{ "vcf" } = $fich1[1];
+                        $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap1" }
+                          { "vcf" } =
+                            $fich1[0] . ":"
+                          . $fich1[1] . " "
+                          . $fich1[3] . ">"
+                          . $fich1[4];
+                        $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap1" }
+                          { "nt" } = $fich1[3] . ">" . $fich1[4];
+                        $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap1" }
+                          { "amino" } =
+                          $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
+                          { "amino" };
+                        $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap1" }
+                          { "exon" } =
+                          $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
+                          { "exon" };
+                        $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap1" }
+                          { "nt_pos" } =
+                          $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
+                          { "nt_pos" };
+                        $mut_hash_pos{ "hap2" }
+                          { $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
+                              { "amino" } }{ "phase" } = "missing";
+                        $mut_hash_pos{ "hap2" }
+                          { $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
+                              { "amino" } }{ "vcf" } = $fich1[1];
+                        $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap2" }
+                          { "vcf" } =
+                            $fich1[0] . ":"
+                          . $fich1[1] . " "
+                          . $fich1[3] . ">"
+                          . $fich1[4];
+                        $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap2" }
+                          { "nt" } = $fich1[3] . ">" . $fich1[4];
+                        $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap2" }
+                          { "amino" } =
+                          $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
+                          { "amino" };
+                        $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap2" }
+                          { "exon" } =
+                          $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
+                          { "exon" };
+                        $mut_hash{ $fich1[ 0 ] }{ $variant_pos + $i }{ "hap2" }
+                          { "nt_pos" } =
+                          $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }
+                          { "nt_pos" };
                 }
+              }
                 else {
                     # Keep genotype for biallelic and multiallelic site
                     if ( $info[0] != 0 ) {
@@ -1533,6 +1616,11 @@ sub parsevcf2 {
                                     #if ($REF_nt[$i] ne $ALT_nt[$i]){
                                     $seq_hash_hap1{ $fich1[ 0 ] }
                                       { $variant_pos + $i } = $ALT_nt[$i];
+                                      if(exists $mut_hash_pos{ "hap1" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase" }) {
+                                          $mut_hash_pos{ "hap1" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase2" } = $phased;
+                                          $mut_hash_pos{ "hap1" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "vcf2" } = $fich1[1];
+                                      }
+                                      else{
                                     $mut_hash_pos{ "hap1" }
                                       { $seq_hash_ref{ $fich1[ 0 ] }
                                           { $variant_pos + $i }{ "amino" } }
@@ -1541,6 +1629,7 @@ sub parsevcf2 {
                                       { $seq_hash_ref{ $fich1[ 0 ] }
                                           { $variant_pos + $i }{ "amino" } }
                                       { "vcf" } = $fich1[1];
+                                      }
                                     $mut_hash{ $fich1[ 0 ] }
                                       { $variant_pos + $i }{ "hap1" }{ "vcf" }
                                       = $fich1[0] . ":"
@@ -1602,6 +1691,11 @@ sub parsevcf2 {
                                     #print "\n c'est une insertion ";
                                     $seq_hash_ref1{ $fich1[ 0 ] }
                                       { $variant_pos + $i_inf } .= "-";
+                                      if(exists $mut_hash_pos{ "hap1" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase" }) {
+                                          $mut_hash_pos{ "hap1" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase2" } = $phased;
+                                          $mut_hash_pos{ "hap1" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "vcf2" } = $fich1[1];
+                                      }
+                                      else{
                                     $mut_hash_pos{ "hap1" }
                                       { $seq_hash_ref{ $fich1[ 0 ] }
                                           { $variant_pos + $i_inf }{ "amino" } }
@@ -1610,6 +1704,7 @@ sub parsevcf2 {
                                       { $seq_hash_ref{ $fich1[ 0 ] }
                                           { $variant_pos + $i_inf }{ "amino" } }
                                       { "vcf" } = $fich1[1];
+                                      }
                                     $seq_hash_hap1{ $fich1[ 0 ] }
                                       { $variant_pos + $i_inf } =
                                       $seq_hash_hap1{ $fich1[ 0 ] }
@@ -1656,6 +1751,11 @@ sub parsevcf2 {
                                 else {
                                     $seq_hash_hap1{ $fich1[ 0 ] }
                                       { $variant_pos + $i } = "-";
+                                      if(exists $mut_hash_pos{ "hap1" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase" }) {
+                                          $mut_hash_pos{ "hap1" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase2" } = $phased;
+                                          $mut_hash_pos{ "hap1" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "vcf2" } = $fich1[1];
+                                      }
+                                      else{
                                     $mut_hash_pos{ "hap1" }
                                       { $seq_hash_ref{ $fich1[ 0 ] }
                                           { $variant_pos + $i }{ "amino" } }
@@ -1664,6 +1764,7 @@ sub parsevcf2 {
                                       { $seq_hash_ref{ $fich1[ 0 ] }
                                           { $variant_pos + $i }{ "amino" } }
                                       { "vcf" } = $fich1[1];
+                                      }
                                     $mut_hash{ $fich1[ 0 ] }
                                       { $variant_pos + $i }{ "hap1" }{ "vcf" }
                                       = $fich1[0] . ":"
@@ -1726,6 +1827,11 @@ sub parsevcf2 {
                                     #if ($REF_nt[$i] ne $ALT_nt[$i]){
                                     $seq_hash_hap2{ $fich1[ 0 ] }
                                       { $variant_pos + $i } = $ALT_nt[$i];
+                                      if(exists $mut_hash_pos{ "hap2" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase" }) {
+                                          $mut_hash_pos{ "hap2" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase2" } = $phased;
+                                          $mut_hash_pos{ "hap2" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "vcf2" } = $fich1[1];
+                                      }
+                                      else{
                                     $mut_hash_pos{ "hap2" }
                                       { $seq_hash_ref{ $fich1[ 0 ] }
                                           { $variant_pos + $i }{ "amino" } }
@@ -1734,6 +1840,7 @@ sub parsevcf2 {
                                       { $seq_hash_ref{ $fich1[ 0 ] }
                                           { $variant_pos + $i }{ "amino" } }
                                       { "vcf" } = $fich1[1];
+                                      }
                                     $mut_hash{ $fich1[ 0 ] }
                                       { $variant_pos + $i }{ "hap2" }{ "vcf" }
                                       = $fich1[0] . ":"
@@ -1764,6 +1871,11 @@ sub parsevcf2 {
                                         { $variant_pos + $i_inf }{ "hap2" }
                                         { "nt" } )
                                     {
+                                      if(exists $mut_hash_pos{ "hap2" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase" }) {
+                                          $mut_hash_pos{ "hap2" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase2" } = $phased;
+                                          $mut_hash_pos{ "hap2" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "vcf2" } = $fich1[1];
+                                      }
+                                      else{
                                         $mut_hash_pos{ "hap2" }
                                           { $seq_hash_ref{ $fich1[ 0 ] }
                                               { $variant_pos + $i_inf }
@@ -1774,6 +1886,7 @@ sub parsevcf2 {
                                               { $variant_pos + $i_inf }
                                               { "amino" } }{ "vcf" } =
                                           $fich1[1];
+                                          }
                                         $mut_hash{ $fich1[ 0 ] }
                                           { $variant_pos + $i_inf }{ "hap2" }
                                           { "vcf" } =
@@ -1805,10 +1918,20 @@ sub parsevcf2 {
                                     #print "\n c'est une insertion ";
                                     $seq_hash_ref2{ $fich1[ 0 ] }
                                       { $variant_pos + $i_inf } .= "-";
+                                      if(exists $mut_hash_pos{ "hap2" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase" }) {
+                                          $mut_hash_pos{ "hap2" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase2" } = $phased;
+                                          $mut_hash_pos{ "hap2" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "vcf2" } = $fich1[1];
+                                      }
+                                      else{
                                     $mut_hash_pos{ "hap2" }
                                       { $seq_hash_ref{ $fich1[ 0 ] }
                                           { $variant_pos + $i_inf }{ "amino" } }
                                       { "phase" } = $phased;
+                                       $mut_hash_pos{ "hap2" }
+                                      { $seq_hash_ref{ $fich1[ 0 ] }
+                                          { $variant_pos + $i_inf }{ "amino" } }
+                                      { "vcf" } = $fich1[1];
+                                      }
                                     $seq_hash_hap2{ $fich1[ 0 ] }
                                       { $variant_pos + $i_inf } =
                                       $seq_hash_hap2{ $fich1[ 0 ] }
@@ -1857,6 +1980,11 @@ sub parsevcf2 {
                                 else {
                                     $seq_hash_hap2{ $fich1[ 0 ] }
                                       { $variant_pos + $i } = "-";
+                                      if(exists $mut_hash_pos{ "hap2" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase" }) {
+                                          $mut_hash_pos{ "hap2" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "phase2" } = $phased;
+                                          $mut_hash_pos{ "hap2" }{ $seq_hash_ref{ $fich1[ 0 ] }{ $variant_pos + $i }{ "amino" }} { "vcf2" } = $fich1[1];
+                                      }
+                                      else{
                                     $mut_hash_pos{ "hap2" }
                                       { $seq_hash_ref{ $fich1[ 0 ] }
                                           { $variant_pos + $i }{ "amino" } }
@@ -1865,6 +1993,7 @@ sub parsevcf2 {
                                       { $seq_hash_ref{ $fich1[ 0 ] }
                                           { $variant_pos + $i }{ "amino" } }
                                       { "vcf" } = $fich1[1];
+                                      }
                                     $mut_hash{ $fich1[ 0 ] }
                                       { $variant_pos + $i }{ "hap2" }{ "vcf" }
                                       = $fich1[0] . ":"
@@ -1904,7 +2033,7 @@ sub parsevcf2 {
     }
     close IN;
 
-    #print "\n\n$mut_nb1 mutation in hap1 and $mut_nb2 mutation in hap2 \n";
+    # print "\n\n$mut_nb1 mutation in hap1 and $mut_nb2 mutation in hap2 \n";
     #print Dumper (\%mut_hash);
     #print Dumper (\%mut_hash_pos);
     return (
