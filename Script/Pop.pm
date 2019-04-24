@@ -25,7 +25,6 @@ sub Pop {
     my $sample_file = "";
     my $gene_file   = "";
     my $g           = "";
-    my $assembly    = "";
     my $domain_file = "";
     my $loc_file    = "";
     my $phas        = "";
@@ -122,17 +121,6 @@ sub Pop {
             die "########\nGene-file does not exist\n########\n";
         }
     }
-    
-    if ( !defined( $Cmdline{ "assembly" } ) ) {
-        die "########\nPlease entry genome assembly\n########\n";
-    }
-    else {
-      $assembly = $Cmdline{ "assembly" };
-      delete $Cmdline{ "assembly" };
-    }
-    
-    
-    
     if ( !defined( $Cmdline{ "domain" } ) ) {
         $domain_opt = 'no';
     }
@@ -167,7 +155,8 @@ sub Pop {
             $dif_pop = $sf_split[1];
             chomp $dif_pop;
             if ( !defined $dif_pop ) {
-                die "########\nSample-file does not contains group of each sample\n########\n";
+                die
+"########\nSample-file does not contains group of each sample\n########\n";
             }
             if ( !defined $local{ $dif_pop } ) {
                 $local{ $dif_pop } = 1;
@@ -204,7 +193,6 @@ sub Pop {
     open GENE, $gene_file;
     my @gene_id = <GENE>;
     my %dif_hap = ();
-    my $tot_hap=0;    
 
     foreach $gene_line (@gene_id) {
         my $nb_sample = 0;
@@ -222,7 +210,8 @@ sub Pop {
                   . " |" );
             my @coding = <CCDS>;
             if ( @coding == 0 ) {
-                print "\n################ \nWARNING : No coding sequence known for $gene_name, verify if this gene symbol officially is correct\n################\n\n";
+                print
+"\n################ \nWARNING : No coding sequence known for $gene_name, verify if this gene symbol officially is correct\n################\n\n";
                 exit;
             }
             if ( @coding == 1 ) {
@@ -276,7 +265,8 @@ sub Pop {
                 }
                 else {
                     @choose_coding = @coding;
-                    print "\n################ \nNo available coding sequence. Using all ccds \n################\n\n";
+                    print
+"\n################ \nNo available coding sequence. Using all ccds \n################\n\n";
                 }
             }
         }
@@ -293,7 +283,8 @@ sub Pop {
             @cod_line      = split( /\t/, $coding[0] );
             @choose_coding = @coding;
             if ( @coding == 0 ) {
-                print "\n################ \n No coding sequence known for this gene, verify if official gene symbol is correct\n################\n\n";
+                print
+"\n################ \n No coding sequence known for this gene, verify if official gene symbol is correct\n################\n\n";
                 next;
             }
         }
@@ -307,11 +298,13 @@ sub Pop {
         my $index_file = $out . "/index.html";
         open INDEX, ">" . $index_file;
         print INDEX "<!doctype html>\n<html>";
-        print INDEX "<head><title>$gene_name Gene transcript</title><link rel=\"stylesheet\" type=\"text/css\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot.css\"/><link rel=\"icon\" type=\"image/png\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot16x16.png\" sizes=\"16x16\"/><link rel=\"icon\" type=\"image/png\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot32x32.png\" sizes=\"32x32\"/><link rel=\"icon\" type=\"image/png\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot186x186.png\" sizes=\"186x186\"/><script type=\"text/javascript\" src=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot.js\"></script></head>\n";
-        print INDEX "<div w3-include-html=\"http://med-laennec.univ-brest.fr/GEMPROT/header.html\" id=\"gemprotheader\" class=\"gemprotheader\"></div>";
+        print INDEX
+"<head><title>$gene_name Gene transcript</title><link rel=\"stylesheet\" type=\"text/css\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot.css\"/><link rel=\"icon\" type=\"image/png\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot16x16.png\" sizes=\"16x16\"/><link rel=\"icon\" type=\"image/png\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot32x32.png\" sizes=\"32x32\"/><link rel=\"icon\" type=\"image/png\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot186x186.png\" sizes=\"186x186\"/><script type=\"text/javascript\" src=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot.js\"></script></head>\n";
+        print INDEX
+"<div w3-include-html=\"http://med-laennec.univ-brest.fr/GEMPROT/header.html\" id=\"gemprotheader\" class=\"gemprotheader\"></div>";
         print INDEX "<body>\n<h1>$gene_name Gene transcript</h1>\n";
         print INDEX"<div class=\"poptablediv\"><table class=\"poptable\">";
-        print INDEX "<thead><tr><th>Gene</th><th>CCDS_ID</th></tr></thead>";
+        print INDEX "<thead><tr><th>Gene</th><th>CCDS_ID</th><tr></thead>";
         open SAMPLE, $sample_file;
         my @sample_id = <SAMPLE>;
 
@@ -343,7 +336,8 @@ sub Pop {
                 print "Create : $F_dir\n";
                 mkdir $F_dir or die "can't create " . $F_dir . "\n";
             }
-            print INDEX "<thead><tr><td class=\"gene\">$fich1[2]</td><td><a href=$gene>$fich1[4]</a></td></tr>";
+            print INDEX
+"<thead><tr><td class=\"gene\">$fich1[2]</td><td><a href=$gene>$fich1[4]</a></td>";
             my $select_phased = $tmp_dir . $gene . ".vcf";
             print "\n==> RUN VCFTOOLS \n";
             if ( $in_phased =~ /.gz$/ ) {
@@ -700,7 +694,8 @@ sub Pop {
                     my $hap_mut_file =
                       $tmp_dir . $gene . ".mutation_by_hap_" . $mut_1b . ".txt";
                     open HMF, ">" . $hap_mut_file;
-                    print HMF "Hap\tGene\tPosition\tRef\tAlt\tType\tStyle\tColor\n";
+                    print HMF
+                      "Hap\tGene\tPosition\tRef\tAlt\tType\tStyle\tColor\n";
                     if ( $mut_info1 ne "no_mutations" ) {
                         for my $m ( split ",", $mut_info1 ) {
                             my @lmut = split( /:/, $m );
@@ -743,7 +738,8 @@ sub Pop {
                     my $hap_mut_file =
                       $tmp_dir . $gene . ".mutation_by_hap_" . $mut_2b . ".txt";
                     open HMF, ">" . $hap_mut_file;
-                    print HMF "Hap\tGene\tPosition\tRef\tAlt\tType\tStyle\tColor\n";
+                    print HMF
+                      "Hap\tGene\tPosition\tRef\tAlt\tType\tStyle\tColor\n";
                     if ( $mut_info2 ne "no_mutations" ) {
                         for my $m2 ( split ",", $mut_info2 ) {
                             my @lmut2 = split( /:/, $m2 );
@@ -791,11 +787,15 @@ sub Pop {
             open HTML, ">" . $htlm_file;
             print GMF "\n";
             print HTML "<!doctype html>\n<html>";
-            print HTML "<head><title>Summary result - $gene Gene</title><link rel=\"stylesheet\" type=\"text/css\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot.css\"/><link rel=\"icon\" type=\"image/png\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot16x16.png\" sizes=\"16x16\"/><link rel=\"icon\" type=\"image/png\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot32x32.png\" sizes=\"32x32\"/><link rel=\"icon\" type=\"image/png\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot186x186.png\" sizes=\"186x186\"/><script type=\"text/javascript\" src=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot.js\"></script></head>\n";
-            print HTML "<div w3-include-html=\"http://med-laennec.univ-brest.fr/GEMPROT/header.html\" id=\"gemprotheader\" class=\"gemprotheader\"></div>";
-            print HTML "<div class=\"goback\"><a href=\"../\">Change Transcript</a></div>";
+            print HTML
+"<head><title>Summary result - $gene Gene</title><link rel=\"stylesheet\" type=\"text/css\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot.css\"/><link rel=\"icon\" type=\"image/png\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot16x16.png\" sizes=\"16x16\"/><link rel=\"icon\" type=\"image/png\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot32x32.png\" sizes=\"32x32\"/><link rel=\"icon\" type=\"image/png\" href=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot186x186.png\" sizes=\"186x186\"/><script type=\"text/javascript\" src=\"http://med-laennec.univ-brest.fr/GEMPROT/gemprot.js\"></script></head>\n";
+            print HTML
+"<div w3-include-html=\"http://med-laennec.univ-brest.fr/GEMPROT/header.html\" id=\"gemprotheader\" class=\"gemprotheader\"></div>";
+            print HTML
+"<div class=\"goback\"><a href=\"../\">Change Transcript</a></div>";
             print HTML "<body>\n<h1>Summary result - $gene Gene</h1>\n";
-            print HTML "<p class=\"geneinfo\"> $gene is a protein with $nb_aa amino acids and $nb_exon exon(s) <br> The protein has $nb_domain domain(s) :<br> ";
+            print HTML
+"<p class=\"geneinfo\"> $gene is a protein with $nb_aa amino acids and $nb_exon exon(s) <br> The protein has $nb_domain domain(s) :<br> ";
             my @dom_list;
 
             #my $dom="";
@@ -824,40 +824,39 @@ sub Pop {
                 print HTML "<th>$loc_id</th>";
                 print GMF $loc_id . "\t";
             }
-            print HTML "<th>TOTAL</th>";
-                print GMF "TOTAL\n";            
             print HTML "<tr></thead><tbody>";
             foreach $hm ( keys %{ $dif_hap{ $gene } } ) {
-                $tot_hap=0;            
                 my $pdf = "Visual/" . $gene . "_" . $hm . "_protein_plot.pdf";
 
                 #print $gene."\t".$hm."\t";
                 print HTML "<tr><td class=\"gene\">$gene</td>";
-                print HTML "<td class=\"haplotype\"><a href=$pdf>$hm</a><div class=\"box\"><iframe src=\"$pdf\" class=\"smallpdf\"></iframe></div></td>";
+                print HTML
+"<td class=\"haplotype\"><a href=$pdf>$hm</a><div class=\"box\"><iframe src=\"$pdf\" class=\"smallpdf\"></iframe></div></td>";
                 print GMF $gene . "\t" . $hm . "\t";
                 foreach $loc ( sort keys %{ $dif_hap{ $gene }{ $hm } } ) {
 
             #print "Clef=$loc mutation=$hm Valeur=$dif_hap{$gene}{$hm}{$loc}\n";
             #print $dif_hap{$gene}{$hm}{$loc}."\t";
-                    print HTML "<td class=\"haplodetail\">$dif_hap{$gene}{$hm}{$loc}</td>";
+                    print HTML
+"<td class=\"haplodetail\">$dif_hap{$gene}{$hm}{$loc}</td>";
                     print GMF $dif_hap{ $gene }{ $hm }{ $loc } . "\t";
-                    $tot_hap+=$dif_hap{ $gene }{ $hm }{ $loc };                    
                 }
-                print HTML "<td class=\"haplodetail\">$tot_hap</td>";
-                print GMF $tot_hap ;
+
                 #print $dif_hap{$gene}{$hm}{$loc}."\n";
                 #print GMF $dif_hap{$gene}{$hm}{$loc}."\n";
                 print GMF "\n";
                 print HTML "</tr>";
             }
-            
+            print HTML "</tbody></table></div>";
+            print HTML
+"<div w3-include-html=\"http://med-laennec.univ-brest.fr/GEMPROT/footer.html\" id=\"gemprotfooter\" class=\"gemprotfooter\"></div>";
+            print HTML "<script>includeHTML();</script></body></html>";
+            print INDEX "</tbody></table></div>";
+            print INDEX
+"<div w3-include-html=\"http://med-laennec.univ-brest.fr/GEMPROT/footer.html\" id=\"gemprotfooter\" class=\"gemprotfooter\"></div>";
+            print INDEX "<script>includeHTML();</script></body></html>";
         }
-        print HTML "</tbody></table></div>";
-        print HTML "<div w3-include-html=\"http://med-laennec.univ-brest.fr/GEMPROT/footer.html\" id=\"gemprotfooter\" class=\"gemprotfooter\"></div>";
-        print HTML "<script>includeHTML();</script></body></html>";
-        print INDEX "</tbody></table></div>";
-        print INDEX "<div w3-include-html=\"http://med-laennec.univ-brest.fr/GEMPROT/footer.html\" id=\"gemprotfooter\" class=\"gemprotfooter\"></div>";
-        print INDEX "<script>includeHTML();</script></body></html>";
+
         #print Dumper(\@non_exist);
     }
     close GMF;

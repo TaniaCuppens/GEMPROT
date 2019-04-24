@@ -3,24 +3,25 @@ require Exporter;
 use warnings;
 
 @ISA = qw(Exporter);
-@EXPORT = qw($genome_reference $CCDS_file $samtools $java $clin_var $vcftools );
+@EXPORT = qw($genome_reference $CCDS_file $CCDS_NM_file $samtools $java $clin_var $vcftools);
 
 
-# reference
-############
+#Reference ############
 
-$genome_reference="/PUBLIC_DATA/ReferenceGenomes/GRCh37.p5/reference.b37.fasta";
+$genome_reference= "/FILE_PATH/*.fasta";
 
-$CCDS_file="/PUBLIC_DATA/Annotation/CCDS/GRCh37/CCDS.current.txt";
+$CCDS_file="/FILE_PATH/CCDS.current.txt";
 
-$CCDS_NM_file="/PUBLIC_DATA/Annotation/CCDS/GRCh37/CCDS2Sequence.current.txt";
+$CCDS_NM_file="/FILE_PATH/CCDS2Sequence.current.txt";
 
-$clin_var="/PUBLIC_DATA/Annotation/Clinvar/clinvar_20180401.vcf.gz";
+$clin_var="/FILE_PATH/clinvar_*.vcf.gz";
 
-#bin list
-#########
+#Tools ############
 
-$samtools="/PROGS/EXTERN/samtools/samtools-1.3/samtools";
-$vcftools="/PROGS/EXTERN/vcftools/vcftools_0.1.12b/bin/vcftools";
+$samtools="/DIR_PATH/samtools";
+
+$vcftools="/DIR_PATH/vcftools";
+
 $java="java";
+
 1;

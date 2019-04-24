@@ -31,8 +31,6 @@ my $usage      = "
 		--output-dir	: specify output directory
 		--sample | --sample-file	: sample or sample file (one sample name by line)
 		--gene | --gene-file	: official gene symbol or official gene symbol with one ccds in tab delimited file (ex: TP53	CCDS11118.1)
-    --assembly (GRCh37 / GRCh38)
-    
 	-pop
 		MANDATORY:
 		--phased-vcf	: phased vcf
@@ -67,7 +65,6 @@ sub CmdLineParser () {
         "sample=s",
         "gene-file=s",
         "gene=s",
-        "assembly=s",
         "loc-file=s",
         "synonymous",
         "fasta",
