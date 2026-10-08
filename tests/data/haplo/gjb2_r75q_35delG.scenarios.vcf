@@ -1,0 +1,6 @@
+##fileformat=VCFv4.2
+##contig=<ID=13,length=114364328>
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	CIS::s0::c0	CIS::s0::c1	TRANS::s0::c0	TRANS::s0::c1	R75Q_SEUL::s0::c0	R75Q_SEUL::s0::c1
+13	20189358	rs28931593	C	T	.	.	.	GT	1|1	0|0	0|0	1|1	1|1	0|0
+13	20189546	rs80338939	AC	A	.	.	.	GT	1|1	0|0	1|1	0|0	0|0	0|0

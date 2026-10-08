@@ -1,0 +1,15 @@
+# Environnement de développement (les outils lourds — vep/haplo — viennent du conteneur)
+name: gemprot2
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - pip
+  - typer>=0.12
+  - pyyaml>=6
+  - pytest>=8
+  - bcftools>=1.20
+  - htslib>=1.20
+  - pip:
+      - -e .
