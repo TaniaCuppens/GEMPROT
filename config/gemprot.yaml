@@ -1,0 +1,23 @@
+# Exemple : copier en config/gemprot.yaml et adapter les chemins à vos données
+assembly: GRCh38
+genomic_dir: /data/genomic
+
+vep:
+  container: /data/containers/ensembl-vep_115.2.sif   # conteneur partagé
+  cache_dir: cache/vep          # liens vers /data/genomic/vep_data_115 (haplo doit écrire son index)
+  shared_cache_dir: /data/genomic/vep_data_115
+  cache_type: refseq          # homo_sapiens_refseq/115_GRCh38
+  cache_version: 115
+  plugins_dir: /data/genomic/vep_data_115/Plugins
+
+fasta: /data/reference/Homo_sapiens.GRCh38.fa   # GRCh38 non masqué (chr1…), indexé
+
+annotations:
+  clinvar: /data/genomic/clinvar/clinvar_20260426.vcf.gz
+  clinvar_chr: /data/genomic/clinvar/clinvar_20260426.chr.vcf.gz
+  dbnsfp: /data/genomic/dbnsfp/dbNSFP5.3.1a_grch38.gz   # AlphaMissense, REVEL, CADD
+  gnomad_dir: /data/genomic/gnomad/v4.1
+  spliceai: /data/genomic/spliceai/spliceai_scores.masked.snv.ensembl_mane_v1.4.grch38.vcf.gz
+
+transcripts:
+  default: mane_select

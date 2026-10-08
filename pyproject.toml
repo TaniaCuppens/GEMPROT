@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gemprot"
+version = "2.0.0.dev0"
+description = "Interprétation cis/trans des variants : les deux protéines d'un individu à partir d'un VCF phasé"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "Tania Cuppens" }]
+dependencies = [
+    "typer>=0.12",
+    "pyyaml>=6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+gemprot = "gemprot.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["container: test qui lance haplo/bcftools via le conteneur (lent)"]

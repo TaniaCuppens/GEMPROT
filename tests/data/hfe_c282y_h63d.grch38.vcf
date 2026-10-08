@@ -1,0 +1,7 @@
+##fileformat=VCFv4.2
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase set">
+##contig=<ID=6,length=170805979>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	C282Y_HOMO	C282Y_H63D_TRANS	C282Y_H63D_CIS
+6	26090951	rs1799945	C	G	.	PASS	.	GT:PS	0|0:1	0|1:1	1|0:1
+6	26092913	rs1800562	G	A	.	PASS	.	GT:PS	1|1:1	1|0:1	1|0:1
