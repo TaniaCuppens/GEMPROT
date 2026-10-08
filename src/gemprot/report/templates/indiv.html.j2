@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GEMPROT · {{ transcript }}</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb;
+  --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --series-1: #2a78d6; --series-2: #eb6834;
+  --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  --lost: #e1e0d9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19;
+    --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --series-1: #3987e5; --series-2: #d95926; --lost: #2c2c2a;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19;
+  --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+  --series-1: #3987e5; --series-2: #d95926; --lost: #2c2c2a;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+       font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+header h1 { font-size: 22px; margin: 0 0 4px; }
+.meta { color: var(--ink-2); font-size: 13px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+        padding: 16px 20px; margin: 16px 0; }
+h2 { font-size: 18px; margin: 0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+h3 { font-size: 14px; margin: 16px 0 6px; color: var(--ink-2); font-weight: 600; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 600; }
+td.num { font-variant-numeric: tabular-nums; }
+a { color: var(--series-1); }
+.badge { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600;
+         color: var(--ink); white-space: nowrap; }
+.badge i { font-style: normal; display: inline-grid; place-items: center; width: 18px; height: 18px;
+           border-radius: 50%; color: #fff; font-size: 11px; }
+.badge.good i { background: var(--good); } .badge.warning i { background: var(--warning); color: #0b0b0b; }
+.badge.serious i { background: var(--serious); color: #0b0b0b; } .badge.critical i { background: var(--critical); }
+.rel { font-weight: 600; } .rel.inconnue { color: var(--critical); }
+.note { color: var(--ink-2); font-size: 13px; margin: 4px 0; }
+.note::before { content: "! "; font-weight: 700; color: var(--serious); }
+.scenario { border-top: 1px solid var(--grid); margin-top: 14px; padding-top: 10px; }
+.scenario-head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.hyp { color: var(--ink-2); font-size: 13px; }
+.track-wrap { overflow-x: auto; }
+svg.tracks { width: 100%; min-width: 640px; height: auto; display: block; }
+svg text { fill: var(--ink-2); font: 12px system-ui, -apple-system, "Segoe UI", sans-serif; }
+svg .copy-label { fill: var(--ink); font-weight: 600; }
+svg .tick { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink-2); margin-top: 8px; }
+.legend svg { vertical-align: middle; margin-right: 4px; }
+details { margin-top: 8px; font-size: 13px; }
+summary { cursor: pointer; color: var(--ink-2); }
+.hit { cursor: default; }
+#tip { position: fixed; pointer-events: none; z-index: 10; max-width: 320px; padding: 6px 10px;
+       background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 6px;
+       box-shadow: 0 2px 8px rgba(0,0,0,.15); font-size: 13px; display: none; }
+footer { color: var(--muted); font-size: 12px; margin-top: 32px; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>GEMPROT · {{ transcript }}</h1>
+  <div class="meta">Protéine de référence : {{ length }} acides aminés · {{ samples|length }} individu(s)
+    {% if source %}· VCF : {{ source }}{% endif %} · {{ date }} · GEMPROT {{ version }}</div>
+</header>
+
+<section class="card">
+  <h2>Résumé</h2>
+  <table>
+    <thead><tr><th>Individu</th><th>Verdict</th><th>Phase</th><th>Scénarios</th></tr></thead>
+    <tbody>
+    {% for s in samples %}
+      <tr>
+        <td><a href="#{{ s.anchor }}">{{ s.name }}</a></td>
+        <td><span class="badge {{ s.status }}"><i aria-hidden="true">{{ status[s.status][0] }}</i>
+          {% if s.status == 'serious' %}{{ status['serious'][1] }}{% else %}{{ s.scenarios[0].summary }}{% endif %}</span></td>
+        <td>{% if not s.pairs %}—{% else %}{% for p in s.pairs %}<span class="rel {{ p.relation }}">{{ p.relation }}</span>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</td>
+        <td class="num">{{ s.scenarios|length }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="legend" aria-label="Légende">
+    <span><svg width="26" height="10"><rect x="0" y="1" width="26" height="8" rx="4" fill="var(--series-1)"/></svg>Copie 1 (gauche du « | »)</span>
+    <span><svg width="26" height="10"><rect x="0" y="1" width="26" height="8" rx="4" fill="var(--series-2)"/></svg>Copie 2</span>
+    <span><svg width="26" height="10"><rect x="0" y="1" width="26" height="8" rx="4" fill="var(--lost)"/></svg>Protéine perdue</span>
+    <span><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="var(--ink-2)"/></svg>Faux-sens</span>
+    <span><svg width="14" height="14"><rect x="3" y="3" width="8" height="8" transform="rotate(45 7 7)" fill="var(--ink-2)"/></svg>Indel en phase</span>
+    <span><svg width="10" height="16"><rect x="3" y="0" width="4" height="16" rx="1" fill="var(--ink)"/></svg>Stop / décalage du cadre / start perdu</span>
+    <span><svg width="14" height="14"><polygon points="2,12 12,7 2,2" fill="var(--ink-2)"/></svg>Stop perdu</span>
+    <span><svg width="14" height="14"><circle cx="7" cy="7" r="5" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="2 2"/></svg>Variant masqué en cis</span>
+  </div>
+</section>
+
+{% macro badge(level, text) -%}
+<span class="badge {{ level }}"><i aria-hidden="true">{{ status[level][0] }}</i>{{ text }}</span>
+{%- endmacro %}
+
+{% for s in samples %}
+<section class="card" id="{{ s.anchor }}">
+  <h2>{{ s.name }} {{ badge(s.status, status['serious'][1] if s.status == 'serious' else s.scenarios[0].summary) }}</h2>
+
+  {% for n in s.notes %}<p class="note">{{ n }}</p>{% endfor %}
+
+  {% if s.pairs %}
+  <h3>Phase des variants</h3>
+  <table>
+    <thead><tr><th>Variant</th><th>Variant</th><th>Relation</th><th>Preuve</th></tr></thead>
+    <tbody>
+    {% for p in s.pairs %}
+      <tr><td>{{ p.a }}</td><td>{{ p.b }}</td><td class="rel {{ p.relation }}">{{ p.relation }}</td><td>{{ p.reason }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% for sc in s.scenarios %}
+  <div class="scenario">
+    <div class="scenario-head"{% if s.scenarios|length == 1 %} hidden{% endif %}>
+      {% if sc.title %}<strong>{{ sc.title }}</strong>{% endif %}
+      {% if sc.hypotheses %}<span class="hyp">{{ sc.hypotheses|join(' · ') }}</span>{% endif %}
+      {% if s.scenarios|length > 1 %}{{ badge(sc.status, sc.summary) }}{% endif %}
+    </div>
+    {% set h = 52 + sc.copies|length * 78 %}
+    <div class="track-wrap">
+    <svg class="tracks" viewBox="0 0 {{ geom.width }} {{ h }}" role="img"
+         aria-label="{{ s.name }} : {% for c in sc.copies %}copie {{ c.index }} {{ c.label }}{% if not loop.last %} ; {% endif %}{% endfor %}">
+      <defs>
+        <pattern id="hatch-{{ s.anchor }}-{{ loop.index }}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="6" height="6" fill="var(--lost)"/><line x1="0" y1="0" x2="0" y2="6" stroke="var(--axis)" stroke-width="2"/>
+        </pattern>
+      </defs>
+      {% set hatch = 'hatch-' ~ s.anchor ~ '-' ~ loop.index %}
+      {% for c in sc.copies %}
+        {% set y = 46 + (loop.index0) * 78 %}
+        {% set color = 'var(--series-1)' if c.index == 1 else 'var(--series-2)' %}
+        <text class="copy-label" x="0" y="{{ y + 4 }}">Copie {{ c.index }}</text>
+        <rect x="{{ geom.left }}" y="{{ y - 4 }}" width="{{ geom.line_end - geom.left }}" height="8" rx="4" fill="url(#{{ hatch }})"/>
+        {% if c.end_x > geom.left %}
+        <rect x="{{ geom.left }}" y="{{ y - 4 }}" width="{{ c.end_x - geom.left }}" height="8" rx="4" fill="{{ color }}"/>
+        {% endif %}
+        {% if not c.marks %}<text x="{{ geom.line_end }}" y="{{ y - 12 }}" text-anchor="end">{{ c.label }}</text>{% endif %}
+        {% for m in c.marks %}
+          {% set ly = y - 16 - m.level * 14 %}
+          <g class="hit" data-tip="{{ m.tip }}">
+            <rect x="{{ m.x - 9 }}" y="{{ y - 22 }}" width="18" height="44" fill="transparent"/>
+            {% if m.kind in truncating %}
+              <rect x="{{ m.x - 2 }}" y="{{ y - 13 }}" width="4" height="26" rx="1" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"/>
+            {% elif m.kind == 'masked' %}
+              <circle cx="{{ m.x }}" cy="{{ y }}" r="6" fill="var(--surface)" stroke="var(--muted)" stroke-width="2" stroke-dasharray="2 2"/>
+            {% elif m.kind == 'inframe_indel' %}
+              <rect x="{{ m.x - 5 }}" y="{{ y - 5 }}" width="10" height="10" transform="rotate(45 {{ m.x }} {{ y }})" fill="{{ color }}" stroke="var(--surface)" stroke-width="2"/>
+            {% elif m.kind == 'stop_lost' %}
+              <polygon points="{{ m.x - 6 }},{{ y + 7 }} {{ m.x + 7 }},{{ y }} {{ m.x - 6 }},{{ y - 7 }}" fill="{{ color }}" stroke="var(--surface)" stroke-width="2"/>
+            {% else %}
+              <circle cx="{{ m.x }}" cy="{{ y }}" r="6" fill="{{ color }}" stroke="var(--surface)" stroke-width="2"/>
+            {% endif %}
+            <text x="{{ m.x }}" y="{{ ly }}" text-anchor="middle">{{ m.label }}</text>
+          </g>
+        {% endfor %}
+      {% endfor %}
+      {% set ay = h - 14 %}
+      <line x1="{{ geom.left }}" y1="{{ ay - 12 }}" x2="{{ geom.line_end }}" y2="{{ ay - 12 }}" stroke="var(--axis)"/>
+      {% for t in ticks %}
+        <line x1="{{ t.x }}" y1="{{ ay - 12 }}" x2="{{ t.x }}" y2="{{ ay - 8 }}" stroke="var(--axis)"/>
+        <text class="tick" x="{{ t.x }}" y="{{ ay + 4 }}" text-anchor="middle">{{ t.pos }}</text>
+      {% endfor %}
+    </svg>
+    </div>
+    <details>
+      <summary>Tableau</summary>
+      <table>
+        <thead><tr><th>Copie</th><th>Changement</th><th>Type</th><th>Position</th><th>Protéine</th></tr></thead>
+        <tbody>
+        {% for c in sc.copies %}
+          {% if not c.changes %}
+          <tr><td>{{ c.index }}</td><td>{{ c.label }}</td><td>—</td><td>—</td><td>complète</td></tr>
+          {% endif %}
+          {% for ch in c.changes %}
+          <tr><td>{{ c.index }}</td><td>{{ ch.hgvs }}</td><td>{{ ch.kind }}</td><td class="num">{{ ch.pos }}</td>
+              <td>{% if c.truncated_at is not none %}perdue après l'acide aminé {{ c.truncated_at }}{% else %}complète{% endif %}{% if c.compensated %} (décalage compensé){% endif %}</td></tr>
+          {% endfor %}
+          {% for mk in c.masked %}
+          <tr><td>{{ c.index }}</td><td>{{ mk }}</td><td>masqué en cis</td><td>—</td><td>sans effet propre</td></tr>
+          {% endfor %}
+        {% endfor %}
+        </tbody>
+      </table>
+    </details>
+  </div>
+  {% endfor %}
+</section>
+{% endfor %}
+
+<footer>
+  Phase : deux variants hétérozygotes ne sont considérés phasés que s'ils sont dans le même bloc PS
+  (ou si le VCF n'a pas de champ PS). Sinon chaque possibilité est montrée comme un scénario.
+  Outil de recherche — ne remplace pas une interprétation clinique.
+</footer>
+</main>
+<div id="tip" role="tooltip"></div>
+<script>
+(function () {
+  var tip = document.getElementById('tip');
+  document.querySelectorAll('[data-tip]').forEach(function (el) {
+    el.addEventListener('mousemove', function (e) {
+      tip.textContent = el.getAttribute('data-tip');
+      tip.style.display = 'block';
+      var x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8);
+      tip.style.left = x + 'px';
+      tip.style.top = (e.clientY + 14) + 'px';
+    });
+    el.addEventListener('mouseleave', function () { tip.style.display = 'none'; });
+  });
+})();
+</script>
+</body>
+</html>

@@ -52,6 +52,7 @@ def indiv(
     transcript: str = typer.Option(..., "--transcript", "-t", help="Transcrit, ex. NM_004004.6"),
     region: Optional[str] = typer.Option(None, "--region", "-r", help="Région à extraire (VCF indexé)"),
     sample: list[str] = typer.Option([], "--sample", "-s", help="Échantillon(s) à garder"),
+    html: Optional[Path] = typer.Option(None, "--html", help="Écrit le rapport HTML autonome ici"),
     config: Path = typer.Option(config_mod.DEFAULT_CONFIG, help="Fichier de configuration"),
 ) -> None:
     """Pour chaque individu : phase des variants, copies de la protéine altérées, variants masqués en cis."""
@@ -67,3 +68,8 @@ def indiv(
             raise typer.BadParameter(str(e.args[0]))
     for name, res in result.samples.items():
         _print_sample(name, res, result.ref_cds)
+    if html:
+        from .report import render_indiv
+
+        render_indiv(result, html, source=vcf.name)
+        typer.echo(f"rapport : {html}")
