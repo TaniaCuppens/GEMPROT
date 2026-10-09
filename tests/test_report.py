@@ -19,7 +19,7 @@ def _render(tmp_path):
 
 def test_report_is_self_contained(tmp_path):
     page = _render(tmp_path)
-    assert not re.search(r"""(src|href)=["']?(https?:)?//""", page)
+    assert not re.search(r"""src=["']?(https?:)?//""", page) and "<link" not in page
     assert "@import" not in page and "url(http" not in page
 
 

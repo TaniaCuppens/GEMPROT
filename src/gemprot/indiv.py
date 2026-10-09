@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Sequence
 
-from .classify import SampleVerdict, classify_pseudo_samples
+from .annotate import Annotations, annotate
+from .classify import SampleVerdict, classify_pseudo_samples, translate
 from .config import Config
 from .haplotypes import TranscriptHaplotypes, parse_haplo_json, run_haplo
-from .phase import SampleAudit, Scenario, audit_sample, read_vcf, scenarios, write_scenario_vcf
+from .phase import SampleAudit, Scenario, Vcf, audit_sample, read_vcf, scenarios, write_scenario_vcf
 
 
 @dataclass
@@ -35,6 +36,8 @@ class IndivResult:
     transcript: str
     ref_cds: str
     samples: dict[str, SampleResult]
+    annotations: Annotations | None = None
+    vcf: Vcf | None = field(default=None, repr=False)
 
 
 def prepare(vcf_path: Path, samples: Sequence[str] = ()) -> tuple:
@@ -74,6 +77,8 @@ def run(
     cfg: Config,
     workdir: Path,
     samples: Sequence[str] = (),
+    with_annotations: bool = True,
+    online: bool = True,
 ) -> IndivResult:
     vcf, audits, plan = prepare(vcf_path, samples)
     pseudo = write_scenario_vcf(vcf, plan, workdir / "scenarios.vcf")
@@ -82,4 +87,8 @@ def run(
         known = ", ".join(sorted(txs)) or "aucun"
         raise KeyError(f"{transcript} absent de la sortie haplo (transcrits : {known})")
     tx = txs[transcript]
-    return IndivResult(transcript, tx.ref_cds, assemble(tx, audits, plan))
+    ann = None
+    if with_annotations:
+        length = len(translate(tx.ref_cds).rstrip("*"))
+        ann = annotate(vcf, transcript, cfg, workdir, length, online)
+    return IndivResult(transcript, tx.ref_cds, assemble(tx, audits, plan), ann, vcf)

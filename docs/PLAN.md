@@ -73,7 +73,7 @@ src/gemprot/
   classify.py    # notation haplo → HGVS ; effets combinés (même codon, frameshift compensé,
                  #   variant masqué par un stop/frameshift en cis) ; verdict « 0, 1 ou 2 copies atteintes »
   properties.py  # propriétés physico-chimiques (spec : Fonction_final.pm:459)
-  annotate.py    # ClinVar, dbNSFP (AlphaMissense, REVEL, CADD), domaines InterPro (cache SQLite)
+  annotate.py    # ClinVar, dbNSFP (AlphaMissense, REVEL, CADD), domaines InterPro (cache JSON)
   structure.py   # AlphaFold DB, distances 3D entre variants en cis
   popstats.py    # haplotypes × groupes, Fisher/χ², permutations, FDR
   report/templates/  # Jinja2 → HTML autonome + TSV + FASTA
@@ -91,7 +91,13 @@ l'entrée/sortie quand la FASTA ou le VCF utilisateur est en `chr`.
 3. Cas PRNP et HFE + cas synthétiques (même codon, frameshift compensé, start perdu, brin −, chrX, multi-allélique).
 4. Mode indiv → rapport HTML (deux pistes, statut de phase, verdict).
 5. `Dockerfile` + GitHub Actions → image GHCR ; vérifier `singularity pull` + `gemprot indiv` dans l'image.
-6. Annotations (ClinVar, dbNSFP, InterPro).
+   Dépôt : branche **`v2`** de `TaniaCuppens/GEMPROT` (décidé le 2026-10-09). Le conteneur VEP partagé n'a pas
+   `bcftools` (seulement `tabix`) : `--region` ne marche qu'une fois l'image gemprot construite.
+6. Annotations (ClinVar, dbNSFP, InterPro) — **fait** (`annotate.py`) : effet isolé de chaque allèle par `vep`
+   (HGVSc/HGVSp, position CDS), ClinVar et dbNSFP par `tabix` (scores du transcrit Ensembl MANE),
+   UniProt + domaines Pfam par API (cache JSON par protéine, pas de SQLite : home sur NFS).
+   Apport GEMPROT : pour chaque variant de chaque copie, « appliqué / masqué / combiné / hors CDS » ;
+   alerte quand l'annotation d'un variant ne décrit pas la protéine produite.
 7. `phase.py` partie **phasage** : WhatsHap (reads ± trio), puis gnomAD co-occurrence, puis SHAPEIT5 ; fusion des preuves.
 8. Mode pop + stats. Sortie graphique : **lolliplot miroir** groupe A (haut) / groupe B (bas) en SVG
    dans le rapport HTML pop (idée reprise de `lolliplot_update`,

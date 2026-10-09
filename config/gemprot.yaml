@@ -18,6 +18,7 @@ annotations:
   dbnsfp: /data/genomic/dbnsfp/dbNSFP5.3.1a_grch38.gz   # AlphaMissense, REVEL, CADD
   gnomad_dir: /data/genomic/gnomad/v4.1
   spliceai: /data/genomic/spliceai/spliceai_scores.masked.snv.ensembl_mane_v1.4.grch38.vcf.gz
+  protein_cache: cache/proteins   # UniProt + domaines Pfam déjà téléchargés (un JSON par protéine)
 
 transcripts:
   default: mane_select
