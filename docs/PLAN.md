@@ -93,7 +93,13 @@ l'entrée/sortie quand la FASTA ou le VCF utilisateur est en `chr`.
 5. `Dockerfile` + GitHub Actions → image GHCR ; vérifier `singularity pull` + `gemprot indiv` dans l'image.
 6. Annotations (ClinVar, dbNSFP, InterPro).
 7. `phase.py` partie **phasage** : WhatsHap (reads ± trio), puis gnomAD co-occurrence, puis SHAPEIT5 ; fusion des preuves.
-8. Mode pop + stats ; 9. AlphaFold ; 10. README + exemples GRCh38 réels (1000G 30x phasé, extrait régional).
+8. Mode pop + stats. Sortie graphique : **lolliplot miroir** groupe A (haut) / groupe B (bas) en SVG
+   dans le rapport HTML pop (idée reprise de `lolliplot_update`,
+   trackViewer → réécrit sans R) : transcrit MANE, hauteur = nombre de **haplotypes** porteurs,
+   variants masqués en cis distingués (lollipop creux), formes/couleurs du rapport indiv (pas de
+   couleurs par hachage), domaines InterPro (étape 6), plus une piste « individus à 0 / 1 / 2 copies
+   altérées » par groupe.
+9. AlphaFold ; 10. README + exemples GRCh38 réels (1000G 30x phasé, extrait régional).
 
 ## Vérification
 
