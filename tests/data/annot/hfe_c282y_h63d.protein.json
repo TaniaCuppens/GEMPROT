@@ -1,0 +1,19 @@
+{
+ "protein_id": "NP_000401.1",
+ "uniprot": "Q30201",
+ "length": 348,
+ "domains": [
+  {
+   "accession": "PF00129",
+   "name": "Class I Histocompatibility antigen, domains alpha 1 and 2",
+   "start": 27,
+   "end": 200
+  },
+  {
+   "accession": "PF07654",
+   "name": "Immunoglobulin C1-set domain",
+   "start": 214,
+   "end": 289
+  }
+ ]
+}

@@ -1,0 +1,13 @@
+{
+ "protein_id": "NP_003995.2",
+ "uniprot": "P29033",
+ "length": 226,
+ "domains": [
+  {
+   "accession": "PF00029",
+   "name": "Connexin",
+   "start": 2,
+   "end": 214
+  }
+ ]
+}

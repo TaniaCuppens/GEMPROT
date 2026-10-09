@@ -1,0 +1,25 @@
+{
+ "protein_id": "NP_000302.1",
+ "uniprot": "P04156",
+ "length": 253,
+ "domains": [
+  {
+   "accession": "PF11587",
+   "name": "Major prion protein bPrPp - N terminal",
+   "start": 1,
+   "end": 28
+  },
+  {
+   "accession": "PF03991",
+   "name": "Copper binding octapeptide repeat region",
+   "start": 50,
+   "end": 95
+  },
+  {
+   "accession": "PF00377",
+   "name": "Prion/Doppel alpha-helical domain",
+   "start": 134,
+   "end": 251
+  }
+ ]
+}

@@ -9,6 +9,7 @@ from pathlib import Path
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from .. import __version__
+from ..annotate import Annotations, CopyVariant, VariantAnnotation, copy_variants
 from ..classify import THREE, HaplotypeEffect, hgvs_c, parse_diff
 from ..indiv import IndivResult, SampleResult
 
@@ -23,6 +24,13 @@ KIND_LABEL = {
     "start_lost": "start perdu",
     "stop_lost": "stop perdu",
     "masked": "masqué en cis",
+}
+VARIANT_STATUS = {
+    "appliqué": "effet isolé = effet sur cette copie",
+    "masqué": "sans effet propre : en aval d'une troncature sur la même copie",
+    "combiné": "combiné avec un autre variant de la même copie",
+    "sans effet protéique": "synonyme",
+    "hors CDS": "hors séquence codante : non évalué par GEMPROT",
 }
 STATUS = {
     "good": ("✓", "Aucune copie altérée"),
@@ -41,11 +49,68 @@ def _status(altered: int, total: int) -> str:
     return "good" if altered == 0 else "critical" if altered == total else "warning"
 
 
-def _copy_view(copy: HaplotypeEffect, index: int, length: int, ref_cds: str) -> dict:
+def _num(v: float | None, fmt: str = ".2f") -> str:
+    return "—" if v is None else format(v, fmt).replace(".", ",")
+
+
+def _evidence(a: VariantAnnotation) -> str:
+    """Résumé court des bases : « ClinVar Pathogenic ★★ · AlphaMissense 0,87 »."""
+    parts = []
+    if a.clinvar:
+        parts.append(f"ClinVar {a.clinvar.significance} {'★' * a.clinvar.stars}".rstrip())
+    if a.scores and a.scores.alphamissense is not None:
+        parts.append(f"AlphaMissense {_num(a.scores.alphamissense)}")
+    return " · ".join(parts)
+
+
+def _variant_row(cv: CopyVariant, a: VariantAnnotation) -> dict:
+    iso, sc, cl = a.isolated, a.scores or None, a.clinvar
+    return {
+        "label": a.label,
+        "hgvsc": iso.hgvsc if iso else None,
+        "isolated": (iso.hgvsp if iso and iso.hgvsp else (iso.consequence.replace("_", " ") if iso else "—")),
+        "status": cv.status,
+        "status_tip": VARIANT_STATUS[cv.status],
+        "effect_on_copy": cv.effect_on_copy,
+        "misleading": cv.misleading,
+        "clinvar": cl and {"sig": cl.significance, "stars": cl.stars, "id": cl.variation_id,
+                           "pathogenic": cl.pathogenic, "conditions": ", ".join(cl.conditions[:3])},
+        "am": sc and sc.alphamissense is not None and {"score": _num(sc.alphamissense), "cls": sc.alphamissense_class},
+        "revel": _num(sc.revel) if sc else "—",
+        "cadd": _num(sc.cadd_phred, ".1f") if sc else "—",
+    }
+
+
+def _warnings(index: int, cvs: list[CopyVariant], ann: Annotations) -> list[str]:
+    out = []
+    for cv in cvs:
+        a = ann.variants[cv.key]
+        ev = _evidence(a)
+        who = f"{a.label} ({ev})" if ev else a.label
+        if cv.status == "masqué":
+            out.append(f"Copie {index} : {who} est masqué par {cv.effect_on_copy} — "
+                       f"son annotation décrit le variant seul, pas cette copie.")
+        elif cv.status == "combiné":
+            what = f"en {cv.effect_on_copy}" if cv.effect_on_copy else "avec un autre variant"
+            out.append(f"Copie {index} : {who} est combiné {what} — "
+                       f"aucune base n'évalue ce changement combiné.")
+        elif cv.status == "hors CDS" and a.clinvar and a.clinvar.pathogenic:
+            out.append(f"Copie {index} : {who} est hors séquence codante (épissage ?) — non évalué par GEMPROT.")
+    return out
+
+
+def _copy_view(copy: HaplotypeEffect, index: int, length: int, ref_cds: str,
+               alleles: dict[int, int] | None = None, ann: Annotations | None = None) -> dict:
+    cvs = copy_variants(copy, alleles, ann) if ann is not None and alleles is not None else []
     marks = []
     for c in copy.changes:
-        marks.append({"pos": c.position, "kind": c.kind, "label": c.hgvs.removeprefix("p."),
-                      "tip": f"{c.hgvs} — {KIND_LABEL.get(c.kind, c.kind)}"})
+        ev = [_evidence(ann.variants[cv.key]) for cv in cvs
+              if (cv.status == "appliqué" and ann.variants[cv.key].isolated.hgvsp
+                  and ann.variants[cv.key].isolated.hgvsp.split("ext")[0] == c.hgvs.split("ext")[0])
+              or cv.effect_on_copy == c.hgvs and cv.status == "combiné"]
+        ev = [e for e in ev if e]
+        tip = f"{c.hgvs} — {KIND_LABEL.get(c.kind, c.kind)}" + (f" · {' ; '.join(ev)}" if ev else "")
+        marks.append({"pos": c.position, "kind": c.kind, "label": c.hgvs.removeprefix("p."), "tip": tip})
     for d in copy.masked:
         pd = parse_diff(d)
         name = hgvs_c(d, ref_cds)
@@ -71,10 +136,13 @@ def _copy_view(copy: HaplotypeEffect, index: int, length: int, ref_cds: str) -> 
         "changes": [{"hgvs": c.hgvs, "kind": KIND_LABEL.get(c.kind, c.kind), "pos": c.position}
                     for c in copy.changes],
         "masked": [hgvs_c(d, ref_cds) for d in copy.masked],
+        "variants": [_variant_row(cv, ann.variants[cv.key]) for cv in cvs],
+        "warnings": _warnings(index, cvs, ann) if ann is not None else [],
     }
 
 
-def _sample_view(name: str, res: SampleResult, length: int, ref_cds: str) -> dict:
+def _sample_view(name: str, res: SampleResult, length: int, ref_cds: str,
+                 ann: Annotations | None = None) -> dict:
     scenarios = []
     for s in res.scenarios:
         v = s.verdict
@@ -84,8 +152,10 @@ def _sample_view(name: str, res: SampleResult, length: int, ref_cds: str) -> dic
             "hypotheses": hyp,
             "status": _status(v.altered_copies, len(v.copies)),
             "summary": v.summary[:1].upper() + v.summary[1:],
-            "copies": [_copy_view(c, i, length, ref_cds) for i, c in enumerate(v.copies, 1)],
+            "copies": [_copy_view(c, i, length, ref_cds, al, ann)
+                       for i, (c, al) in enumerate(zip(v.copies, s.scenario.copies), 1)],
         })
+        scenarios[-1]["warnings"] = [w for c in scenarios[-1]["copies"] for w in c["warnings"]]
     level = "serious" if not res.conclusive else scenarios[0]["status"]
     return {
         "name": name,
@@ -96,7 +166,27 @@ def _sample_view(name: str, res: SampleResult, length: int, ref_cds: str) -> dic
                   for p in res.audit.pairs],
         "units": res.audit.units,
         "scenarios": scenarios,
+        "n_warnings": max(len(sc["warnings"]) for sc in scenarios),
     }
+
+
+def _fit(text: str, n: int) -> str:
+    """Tronque une étiquette à n caractères (vide si moins de 5 caractères tiennent)."""
+    if n < 5:
+        return ""
+    return text if len(text) <= n else text[: n - 1].rstrip() + "…"
+
+
+def _domains(ann: Annotations | None, length: int) -> list[dict]:
+    if ann is None or ann.protein is None:
+        return []
+    out = []
+    for i, d in enumerate(ann.protein.domains):
+        x1, x2 = _x(d.start, length), _x(min(d.end, length), length)
+        out.append({"x": round(x1, 1), "w": round(max(x2 - x1, 2), 1), "name": d.name, "acc": d.accession,
+                    "tip": f"{d.name} ({d.accession}) : {d.start}–{d.end}",
+                    "label": _fit(d.name, int((x2 - x1 - 8) / 6.5)), "alt": i % 2})
+    return out
 
 
 def _ticks(length: int) -> list[dict]:
@@ -117,7 +207,12 @@ def render_indiv(result: IndivResult, out: Path, source: str = "") -> Path:
         source=source,
         version=__version__,
         date=dt.date.today().isoformat(),
-        samples=[_sample_view(n, r, length, result.ref_cds) for n, r in result.samples.items()],
+        samples=[_sample_view(n, r, length, result.ref_cds, result.annotations)
+                 for n, r in result.samples.items()],
+        annotated=result.annotations is not None,
+        protein=result.annotations.protein if result.annotations else None,
+        ann_notes=result.annotations.notes if result.annotations else [],
+        domains=_domains(result.annotations, length),
         ticks=_ticks(length),
         geom={"width": WIDTH, "left": LEFT, "right": RIGHT, "line_end": WIDTH - RIGHT},
         status=STATUS,
