@@ -1,0 +1,8 @@
+*
+!Dockerfile
+!environment.image.yml
+!pyproject.toml
+!README.md
+!src/
+!config/gemprot.image.yaml
+**/__pycache__

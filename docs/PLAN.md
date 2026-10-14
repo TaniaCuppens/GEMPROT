@@ -93,6 +93,12 @@ l'entrée/sortie quand la FASTA ou le VCF utilisateur est en `chr`.
 5. `Dockerfile` + GitHub Actions → image GHCR ; vérifier `singularity pull` + `gemprot indiv` dans l'image.
    Dépôt : branche **`v2`** de `TaniaCuppens/GEMPROT` (décidé le 2026-10-09). Le conteneur VEP partagé n'a pas
    `bcftools` (seulement `tabix`) : `--region` ne marche qu'une fois l'image gemprot construite.
+   **Écrit** : `Dockerfile` (micromamba), `environment.image.yml` (versions figées : vep 115.2, bcftools 1.21,
+   WhatsHap 2.8, HiPhase 1.7.0, SHAPEIT5 5.1.1), `config/gemprot.image.yaml` (données sous `/data`),
+   `.github/workflows/image.yml` (construction, contrôle des outils, pytest dans l'image, publication
+   `ghcr.io/taniacuppens/gemprot`). Même environnement installé localement : tests + `gemprot indiv -r`
+   (bcftools) sur GJB2 OK sans conteneur. Reste : premier passage d'Actions, paquet GHCR public,
+   `singularity pull` ici.
 6. Annotations (ClinVar, dbNSFP, InterPro) — **fait** (`annotate.py`) : effet isolé de chaque allèle par `vep`
    (HGVSc/HGVSp, position CDS), ClinVar et dbNSFP par `tabix` (scores du transcrit Ensembl MANE),
    UniProt + domaines Pfam par API (cache JSON par protéine, pas de SQLite : home sur NFS).
