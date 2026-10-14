@@ -13,6 +13,7 @@ from . import indiv as indiv_mod
 from .annotate import Annotations, copy_variants
 from .classify import hgvs_c
 from .extract import extract_region
+from .phasing import SOURCE_LABELS, read_ped
 
 app = typer.Typer(help="GEMPROT 2 : les deux protéines d'un individu à partir d'un VCF phasé.")
 
@@ -27,8 +28,22 @@ def _print_sample(name: str, res: indiv_mod.SampleResult, ref_cds: str, ann: Ann
     typer.echo(f"{name}")
     for note in audit.notes:
         typer.echo(f"  ! {note}")
+    if res.phase:
+        f = res.phase
+        typer.echo(f"  sources de phase : {', '.join(SOURCE_LABELS[s] for s in f.sources) or 'aucune'}")
+        for note in f.notes:
+            typer.echo(f"  ! {note}")
+        for p in f.disagreements:
+            avis = ", ".join(f"{SOURCE_LABELS[s]} : {r}" for s, r in p.by_source.items())
+            typer.echo(f"  ! désaccord {p.label_a} / {p.label_b} ({avis}) → retenu : {p.final}")
+    evidence = {(e.a, e.b): e for e in res.phase.pairs} if res.phase else {}
     for p in audit.pairs:
-        typer.echo(f"  phase {p.a.label} / {p.b.label} : {p.relation} ({p.reason})")
+        e = evidence.get((min(p.a.record, p.b.record), max(p.a.record, p.b.record)))
+        if e and e.by_source:
+            avis = ", ".join(f"{SOURCE_LABELS[s]} : {r}" for s, r in e.by_source.items())
+            typer.echo(f"  phase {p.a.label} / {p.b.label} : {p.relation} ({avis} — {e.status})")
+        else:
+            typer.echo(f"  phase {p.a.label} / {p.b.label} : {p.relation} ({p.reason})")
     many = len(res.scenarios) > 1
     if many:
         verdict = "même conclusion quelle que soit la phase" if res.conclusive else "la conclusion DÉPEND de la phase"
@@ -65,6 +80,8 @@ def indiv(
     transcript: str = typer.Option(..., "--transcript", "-t", help="Transcrit, ex. NM_004004.6"),
     region: Optional[str] = typer.Option(None, "--region", "-r", help="Région à extraire (VCF indexé)"),
     sample: list[str] = typer.Option([], "--sample", "-s", help="Échantillon(s) à garder"),
+    bam: list[Path] = typer.Option([], "--bam", exists=True, help="BAM/CRAM indexé (phasage par reads, WhatsHap) ; répétable"),
+    ped: Optional[Path] = typer.Option(None, "--ped", exists=True, help="Pedigree .ped (phasage par trio ; parents dans le VCF)"),
     html: Optional[Path] = typer.Option(None, "--html", help="Écrit le rapport HTML autonome ici"),
     annotate: bool = typer.Option(True, help="ClinVar, AlphaMissense, REVEL, CADD et domaines"),
     offline: bool = typer.Option(False, help="Pas de requête UniProt/InterPro (cache seulement)"),
@@ -76,9 +93,14 @@ def indiv(
         tmpdir = Path(tmp)
         vcf_in = vcf.resolve()
         if region:
-            vcf_in = extract_region(vcf_in, region, tmpdir / "region.vcf.gz", cfg, sample)
+            keep = list(sample)
+            if sample and ped:  # garder les parents pour le phasage par trio
+                family = read_ped(ped)
+                keep += [p for s in sample for p in family.get(s, ()) if p and p not in keep]
+            vcf_in = extract_region(vcf_in, region, tmpdir / "region.vcf.gz", cfg, keep)
         try:
-            result = indiv_mod.run(vcf_in, transcript, cfg, tmpdir, sample, annotate, not offline)
+            result = indiv_mod.run(vcf_in, transcript, cfg, tmpdir, sample, annotate, not offline,
+                                   [b.resolve() for b in bam], ped.resolve() if ped else None)
         except (KeyError, ValueError) as e:
             raise typer.BadParameter(str(e.args[0]))
     if result.annotations:

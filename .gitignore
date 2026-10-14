@@ -8,3 +8,7 @@ results/
 cache/
 config/gemprot.yaml
 build/
+# index distants téléchargés par bcftools/samtools
+/*.tbi
+/*.crai
+/*.csi

@@ -138,11 +138,17 @@ footer { color: var(--muted); font-size: 12px; margin-top: 32px; }
 
   {% if s.pairs %}
   <h3>Phase des variants</h3>
+  {% if s.sources %}<p class="note">Sources de phase comparées : {{ s.sources|join(', ') }}.</p>{% endif %}
+  {% if s.phase_notes %}<ul class="alerts">{% for n in s.phase_notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
   <table>
-    <thead><tr><th>Variant</th><th>Variant</th><th>Relation</th><th>Preuve</th></tr></thead>
+    <thead><tr><th>Variant</th><th>Variant</th><th>Relation</th>
+      {% if s.sources %}{% for src in s.sources %}<th>{{ src }}</th>{% endfor %}<th>Statut</th>{% else %}<th>Preuve</th>{% endif %}</tr></thead>
     <tbody>
     {% for p in s.pairs %}
-      <tr><td>{{ p.a }}</td><td>{{ p.b }}</td><td class="rel {{ p.relation }}">{{ p.relation }}</td><td>{{ p.reason }}</td></tr>
+      <tr><td>{{ p.a }}</td><td>{{ p.b }}</td><td class="rel {{ p.relation }}">{{ p.relation }}</td>
+        {% if s.sources %}{% for r in p.by_source %}<td>{{ r }}</td>{% endfor %}
+        <td{% if p.status == 'désaccord' %} class="rel inconnue"{% endif %}>{{ p.status or p.reason }}</td>
+        {% else %}<td>{{ p.reason }}</td>{% endif %}</tr>
     {% endfor %}
     </tbody>
   </table>
@@ -267,6 +273,8 @@ footer { color: var(--muted); font-size: 12px; margin-top: 32px; }
 <footer>
   Phase : deux variants hétérozygotes ne sont considérés phasés que s'ils sont dans le même bloc PS
   (ou si le VCF n'a pas de champ PS). Sinon chaque possibilité est montrée comme un scénario.
+  Quand plusieurs sources de phase sont fournies, la plus fiable l'emporte (trio &gt; reads &gt; VCF d'entrée)
+  et leurs désaccords sont signalés.
   {% if annotated %}ClinVar, AlphaMissense, REVEL et CADD évaluent chaque variant seul (transcrit Ensembl MANE
   pour les scores) ; « Sur cette copie » indique si cet effet isolé est bien celui de la protéine produite.
   Seuils AlphaMissense : ≥ 0,564 probablement pathogène, &lt; 0,34 probablement bénin.{% endif %}
