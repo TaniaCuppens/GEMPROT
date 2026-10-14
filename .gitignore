@@ -6,3 +6,4 @@ __pycache__/
 .pytest_cache/
 results/
 cache/
+config/gemprot.yaml

@@ -1,14 +1,17 @@
-"""Lecture de config/gemprot.yaml ; les chemins relatifs sont résolus depuis la racine du projet."""
+"""Lecture de la config (GEMPROT_CONFIG, sinon config/gemprot.yaml, hors git) ;
+les chemins relatifs sont résolus depuis la racine du projet. Modèle : config/gemprot.example.yaml."""
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_CONFIG = PROJECT_ROOT / "config" / "gemprot.yaml"
+DEFAULT_CONFIG = Path(os.environ.get("GEMPROT_CONFIG", PROJECT_ROOT / "config" / "gemprot.yaml"))
+EXAMPLE_CONFIG = PROJECT_ROOT / "config" / "gemprot.example.yaml"
 
 
 @dataclass(frozen=True)
@@ -36,7 +39,10 @@ def _path(value: str | None, root: Path) -> Path | None:
 
 
 def load(path: Path | str = DEFAULT_CONFIG, root: Path = PROJECT_ROOT) -> Config:
-    raw = yaml.safe_load(Path(path).read_text())
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"config introuvable : {path} (copier {EXAMPLE_CONFIG} et adapter les chemins)")
+    raw = yaml.safe_load(path.read_text())
     v = raw["vep"]
     vep = VepConfig(
         container=_path(v.get("container"), root),
