@@ -1,0 +1,79 @@
+name: image
+
+on:
+  push:
+    branches: [v2]
+    tags: ["v2.*"]
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - environment.image.yml
+      - pyproject.toml
+      - README.md
+      - src/**
+      - config/gemprot.image.yaml
+      - tests/**
+      - .github/workflows/image.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/taniacuppens/gemprot
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Construction
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: gemprot:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Outils présents
+        run: |
+          docker run --rm gemprot:test bash -c '
+            set -e
+            for t in gemprot vep haplo bcftools tabix samtools whatshap hiphase SHAPEIT5_phase_common; do
+              command -v "$t"
+            done
+            gemprot --help > /dev/null
+            bcftools --version | head -1
+            whatshap --version
+            perl -MBio::DB::HTS -e1'
+
+      - name: Tests (sans données externes)
+        run: docker run --rm -v "$PWD/tests:/tests:ro" -w /tmp gemprot:test python -m pytest -q -p no:cacheprovider /tests
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha,format=short
+
+      - name: Publication
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
