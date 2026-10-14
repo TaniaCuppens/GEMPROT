@@ -97,8 +97,9 @@ l'entrée/sortie quand la FASTA ou le VCF utilisateur est en `chr`.
    WhatsHap 2.8, HiPhase 1.7.0, SHAPEIT5 5.1.1), `config/gemprot.image.yaml` (données sous `/data`),
    `.github/workflows/image.yml` (construction, contrôle des outils, pytest dans l'image, publication
    `ghcr.io/taniacuppens/gemprot`). Même environnement installé localement : tests + `gemprot indiv -r`
-   (bcftools) sur GJB2 OK sans conteneur. Reste : premier passage d'Actions, paquet GHCR public,
-   `singularity pull` ici.
+   (bcftools) sur GJB2 OK sans conteneur. **Fait** (2026-10-14) : Actions OK (outils + tests dans l'image),
+   `ghcr.io/taniacuppens/gemprot:v2` public (visibilité héritée du dépôt), `singularity pull` ici (1,1 Go)
+   puis `gemprot indiv -r … --html` dans l'image avec les données montées : mêmes résultats.
 6. Annotations (ClinVar, dbNSFP, InterPro) — **fait** (`annotate.py`) : effet isolé de chaque allèle par `vep`
    (HGVSc/HGVSp, position CDS), ClinVar et dbNSFP par `tabix` (scores du transcrit Ensembl MANE),
    UniProt + domaines Pfam par API (cache JSON par protéine, pas de SQLite : home sur NFS).
