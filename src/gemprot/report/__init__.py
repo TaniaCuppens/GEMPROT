@@ -12,6 +12,7 @@ from .. import __version__
 from ..annotate import Annotations, CopyVariant, VariantAnnotation, copy_variants
 from ..classify import THREE, HaplotypeEffect, hgvs_c, parse_diff
 from ..indiv import IndivResult, SampleResult
+from ..phasing import SOURCE_LABELS
 
 # géométrie des pistes protéiques (unités du viewBox SVG)
 WIDTH, LEFT, RIGHT = 1000, 70, 20
@@ -157,13 +158,30 @@ def _sample_view(name: str, res: SampleResult, length: int, ref_cds: str,
         })
         scenarios[-1]["warnings"] = [w for c in scenarios[-1]["copies"] for w in c["warnings"]]
     level = "serious" if not res.conclusive else scenarios[0]["status"]
+    sources, evidence, phase_notes = [], {}, []
+    if res.phase:
+        sources = res.phase.sources
+        evidence = {(e.a, e.b): e for e in res.phase.pairs}
+        phase_notes = res.phase.notes + [
+            f"{e.label_a} / {e.label_b} : " + ", ".join(f"{SOURCE_LABELS[k]} {r}" for k, r in e.by_source.items())
+            + f" — retenu : {e.final} ({SOURCE_LABELS[e.retained]})"
+            for e in res.phase.disagreements
+        ]
+
+    def pair(p) -> dict:
+        e = evidence.get((min(p.a.record, p.b.record), max(p.a.record, p.b.record)))
+        return {"a": p.a.label, "b": p.b.label, "relation": p.relation, "reason": p.reason,
+                "by_source": [(e.by_source.get(k, "—") if e else "—") for k in sources],
+                "status": e.status if e else ""}
+
     return {
         "name": name,
         "anchor": "s-" + "".join(ch if ch.isalnum() else "-" for ch in name),
         "status": level,
         "notes": res.audit.notes,
-        "pairs": [{"a": p.a.label, "b": p.b.label, "relation": p.relation, "reason": p.reason}
-                  for p in res.audit.pairs],
+        "pairs": [pair(p) for p in res.audit.pairs],
+        "sources": [SOURCE_LABELS[k] for k in sources],
+        "phase_notes": phase_notes,
         "units": res.audit.units,
         "scenarios": scenarios,
         "n_warnings": max(len(sc["warnings"]) for sc in scenarios),

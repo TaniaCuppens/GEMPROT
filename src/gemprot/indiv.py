@@ -1,4 +1,4 @@
-"""Mode individu : audit de la phase → scénarios → haplo → effet de chaque copie."""
+"""Mode individu : sources de phase → audit → scénarios → haplo → effet de chaque copie."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from .classify import SampleVerdict, classify_pseudo_samples, translate
 from .config import Config
 from .haplotypes import TranscriptHaplotypes, parse_haplo_json, run_haplo
 from .phase import SampleAudit, Scenario, Vcf, audit_sample, read_vcf, scenarios, write_scenario_vcf
+from .phasing import FusedPhase, apply, phase_sources
 
 
 @dataclass
@@ -24,6 +25,7 @@ class ScenarioResult:
 class SampleResult:
     audit: SampleAudit
     scenarios: list[ScenarioResult]
+    phase: FusedPhase | None = None  # sources de phase comparées (si BAM ou .ped fournis)
 
     @property
     def conclusive(self) -> bool:
@@ -40,8 +42,8 @@ class IndivResult:
     vcf: Vcf | None = field(default=None, repr=False)
 
 
-def prepare(vcf_path: Path, samples: Sequence[str] = ()) -> tuple:
-    vcf = read_vcf(vcf_path)
+def prepare(vcf_path: Path | Vcf, samples: Sequence[str] = ()) -> tuple:
+    vcf = vcf_path if isinstance(vcf_path, Vcf) else read_vcf(vcf_path)
     names = list(samples) or vcf.samples
     audits = {s: audit_sample(vcf, s) for s in names}
     plan = {s: scenarios(a) for s, a in audits.items()}
@@ -52,6 +54,7 @@ def assemble(
     tx: TranscriptHaplotypes,
     audits: dict[str, SampleAudit],
     plan: dict[str, list[Scenario]],
+    phase: dict[str, FusedPhase] | None = None,
 ) -> dict[str, SampleResult]:
     verdicts = classify_pseudo_samples(tx)
     results = {}
@@ -67,6 +70,7 @@ def assemble(
                 )
                 for sc in plan[sample]
             ],
+            (phase or {}).get(sample),
         )
     return results
 
@@ -79,8 +83,16 @@ def run(
     samples: Sequence[str] = (),
     with_annotations: bool = True,
     online: bool = True,
+    bams: Sequence[Path] = (),
+    ped: Path | None = None,
 ) -> IndivResult:
-    vcf, audits, plan = prepare(vcf_path, samples)
+    vcf = read_vcf(vcf_path)
+    names = list(samples) or vcf.samples
+    phase = None
+    if bams or ped:
+        phase = phase_sources(vcf, vcf_path, names, cfg, workdir, bams, ped)
+        vcf = apply(vcf, phase)
+    vcf, audits, plan = prepare(vcf, names)
     pseudo = write_scenario_vcf(vcf, plan, workdir / "scenarios.vcf")
     txs = {t.transcript_id: t for t in parse_haplo_json(run_haplo(pseudo, workdir / "haplo.json", cfg))}
     if transcript not in txs:
@@ -91,4 +103,4 @@ def run(
     if with_annotations:
         length = len(translate(tx.ref_cds).rstrip("*"))
         ann = annotate(vcf, transcript, cfg, workdir, length, online)
-    return IndivResult(transcript, tx.ref_cds, assemble(tx, audits, plan), ann, vcf)
+    return IndivResult(transcript, tx.ref_cds, assemble(tx, audits, plan, phase), ann, vcf)

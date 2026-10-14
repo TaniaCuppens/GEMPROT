@@ -55,6 +55,7 @@ class Vcf:
     samples: list[str]
     records: list[Record]
     has_ps: bool
+    ps_desc: dict[str, str] = field(default_factory=dict)  # bloc PS → description (phase fusionnée)
 
 
 def _parse_gt(gt: str, ps: str | None) -> Genotype:
@@ -164,7 +165,7 @@ def audit_sample(vcf: Vcf, sample: str) -> SampleAudit:
             elif vcf.has_ps and gt.ps is None:
                 key, desc = ("unphased", i), f"{rec.label(max(gt.carried))} (phasé sans bloc PS)"
             elif vcf.has_ps:
-                key, desc = ("ps", gt.ps), f"bloc PS {gt.ps}"
+                key, desc = ("ps", gt.ps), vcf.ps_desc.get(gt.ps, f"bloc PS {gt.ps}")
             else:
                 key, desc = ("global",), "phase du VCF (pas de champ PS : supposée globale)"
             if key not in units:

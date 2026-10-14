@@ -106,6 +106,16 @@ l'entrée/sortie quand la FASTA ou le VCF utilisateur est en `chr`.
    Apport GEMPROT : pour chaque variant de chaque copie, « appliqué / masqué / combiné / hors CDS » ;
    alerte quand l'annotation d'un variant ne décrit pas la protéine produite.
 7. `phase.py` partie **phasage** : WhatsHap (reads ± trio), puis gnomAD co-occurrence, puis SHAPEIT5 ; fusion des preuves.
+   **7a fait** (`phasing.py`) : sources séparées — trio (transmission mendélienne calculée depuis les
+   génotypes des parents + `.ped`), reads (WhatsHap sans `--ped`), VCF d'entrée — puis fusion par
+   union-find avec parité dans l'ordre trio > reads > VCF ; désaccords par paire signalés, contradictions
+   indirectes notées, blocs reliés par une autre source (trio qui joint deux blocs de reads → « déduite »).
+   Résultat réécrit en GT/PS puis audit habituel. CLI `--bam` (répétable), `--ped` ; rapport : un avis par
+   source et par paire. Cas test : NAT2, trio CEPH 1463 1000G 30x (NA12878 : c.341C + c.481T en trans de
+   c.803 ; 32 scénarios sans phase → 1 ; trio et reads d'accord, et d'accord avec le panel 1000G).
+   Reste : 7b gnomAD co-occurrence (paires rares), 7c SHAPEIT5 (communs, `--use-PS`).
+   À faire aussi : limiter scénarios et paires aux variants qui touchent la protéine (les introniques
+   multiplient les scénarios sans changer les copies).
 8. Mode pop + stats. Sortie graphique : **lolliplot miroir** groupe A (haut) / groupe B (bas) en SVG
    dans le rapport HTML pop (idée reprise de `lolliplot_update`,
    trackViewer → réécrit sans R) : transcrit MANE, hauteur = nombre de **haplotypes** porteurs,
