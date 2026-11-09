@@ -1,4 +1,4 @@
-"""Rapport HTML autonome du mode individu (aucune ressource externe)."""
+"""Self-contained HTML report for the sample mode (no external resources)."""
 
 from __future__ import annotations
 
@@ -15,30 +15,30 @@ from ..indiv import IndivResult, SampleResult
 from ..phasing import SOURCE_LABELS
 from ..scope import Outside
 
-# géométrie des pistes protéiques (unités du viewBox SVG)
+# protein track geometry (SVG viewBox units)
 WIDTH, LEFT, RIGHT = 1000, 70, 20
 TRUNCATING = {"stop_gained", "frameshift", "start_lost"}
 KIND_LABEL = {
-    "missense": "faux-sens",
-    "inframe_indel": "indel en phase",
-    "stop_gained": "stop gagné",
-    "frameshift": "décalage du cadre",
-    "start_lost": "start perdu",
-    "stop_lost": "stop perdu",
-    "masked": "masqué en cis",
+    "missense": "missense",
+    "inframe_indel": "in-frame indel",
+    "stop_gained": "stop gained",
+    "frameshift": "frameshift",
+    "start_lost": "start lost",
+    "stop_lost": "stop lost",
+    "masked": "masked in cis",
 }
 VARIANT_STATUS = {
-    "appliqué": "effet isolé = effet sur cette copie",
-    "masqué": "sans effet propre : en aval d'une troncature sur la même copie",
-    "combiné": "combiné avec un autre variant de la même copie",
-    "sans effet protéique": "synonyme",
-    "hors CDS": "hors séquence codante : non évalué par GEMPROT",
+    "applied": "isolated effect = effect on this copy",
+    "masked": "no effect of its own: downstream of a truncation on the same copy",
+    "combined": "combined with another variant on the same copy",
+    "no protein effect": "synonymous",
+    "outside CDS": "outside the coding sequence: GEMPROT does not evaluate it",
 }
 STATUS = {
-    "good": ("✓", "Aucune copie à séquence modifiée"),
-    "warning": ("!", "Une copie à séquence modifiée, une copie inchangée"),
-    "critical": ("✕", "Toutes les copies à séquence modifiée"),
-    "serious": ("?", "Conclusion dépendante de la phase"),
+    "good": ("✓", "No copy with a changed sequence"),
+    "warning": ("!", "One copy with a changed sequence, one unchanged copy"),
+    "critical": ("✕", "All copies have a changed sequence"),
+    "serious": ("?", "Conclusion depends on the phase"),
 }
 
 
@@ -52,11 +52,11 @@ def _status(altered: int, total: int) -> str:
 
 
 def _num(v: float | None, fmt: str = ".2f") -> str:
-    return "—" if v is None else format(v, fmt).replace(".", ",")
+    return "—" if v is None else format(v, fmt)
 
 
 def _evidence(a: VariantAnnotation) -> str:
-    """Résumé court des bases : « ClinVar Pathogenic ★★ · AlphaMissense 0,87 »."""
+    """Short database summary: "ClinVar Pathogenic ★★ · AlphaMissense 0.87"."""
     parts = []
     if a.clinvar:
         parts.append(f"ClinVar {a.clinvar.significance} {'★' * a.clinvar.stars}".rstrip())
@@ -89,15 +89,15 @@ def _warnings(index: int, cvs: list[CopyVariant], ann: Annotations) -> list[str]
         a = ann.variants[cv.key]
         ev = _evidence(a)
         who = f"{a.label} ({ev})" if ev else a.label
-        if cv.status == "masqué":
-            out.append(f"Copie {index} : {who} est masqué par {cv.effect_on_copy} — "
-                       f"son annotation décrit le variant seul, pas cette copie.")
-        elif cv.status == "combiné":
-            what = f"en {cv.effect_on_copy}" if cv.effect_on_copy else "avec un autre variant"
-            out.append(f"Copie {index} : {who} est combiné {what} — "
-                       f"aucune base n'évalue ce changement combiné.")
-        elif cv.status == "hors CDS" and a.clinvar and a.clinvar.pathogenic:
-            out.append(f"Copie {index} : {who} est hors séquence codante (épissage ?) — non évalué par GEMPROT.")
+        if cv.status == "masked":
+            out.append(f"Copy {index}: {cv.effect_on_copy} masks {who}. "
+                       f"Its annotation describes the variant alone, not this copy.")
+        elif cv.status == "combined":
+            what = f"into {cv.effect_on_copy}" if cv.effect_on_copy else "with another variant"
+            out.append(f"Copy {index}: {who} is combined {what}. "
+                       f"No database evaluates this combined change.")
+        elif cv.status == "outside CDS" and a.clinvar and a.clinvar.pathogenic:
+            out.append(f"Copy {index}: {who} is outside the coding sequence (splicing?). GEMPROT does not evaluate it.")
     return out
 
 
@@ -107,9 +107,9 @@ def _copy_view(copy: HaplotypeEffect, index: int, length: int, ref_cds: str,
     marks = []
     for c in copy.changes:
         ev = [_evidence(ann.variants[cv.key]) for cv in cvs
-              if (cv.status == "appliqué" and ann.variants[cv.key].isolated.hgvsp
+              if (cv.status == "applied" and ann.variants[cv.key].isolated.hgvsp
                   and ann.variants[cv.key].isolated.hgvsp.split("ext")[0] == c.hgvs.split("ext")[0])
-              or cv.effect_on_copy == c.hgvs and cv.status == "combiné"]
+              or cv.effect_on_copy == c.hgvs and cv.status == "combined"]
         ev = [e for e in ev if e]
         tip = f"{c.hgvs} — {KIND_LABEL.get(c.kind, c.kind)}" + (f" · {' ; '.join(ev)}" if ev else "")
         marks.append({"pos": c.position, "kind": c.kind, "label": c.hgvs.removeprefix("p."), "tip": tip})
@@ -117,10 +117,10 @@ def _copy_view(copy: HaplotypeEffect, index: int, length: int, ref_cds: str,
         pd = parse_diff(d)
         name = hgvs_c(d, ref_cds)
         marks.append({"pos": pd.codon, "kind": "masked", "label": name,
-                      "tip": f"{name} (codon {pd.codon}) — sans effet propre : en aval de la "
-                             f"troncature sur la même copie"})
+                      "tip": f"{name} (codon {pd.codon}) — no effect of its own: downstream of the "
+                             f"truncation on the same copy"})
     marks.sort(key=lambda m: m["pos"])
-    # étiquettes : on alterne la hauteur quand deux marques sont proches
+    # labels: alternate the height when two marks are near
     last_x, level = -1e9, 0
     for m in marks:
         m["x"] = round(_x(m["pos"], length), 1)
@@ -150,7 +150,7 @@ def _sample_view(name: str, res: SampleResult, length: int, ref_cds: str,
         v = s.verdict
         hyp = [f"{a} {r} {b}" for a, b, r in s.relations] + list(s.scenario.assumptions)
         scenarios.append({
-            "title": f"Scénario {s.scenario.index + 1}" if len(res.scenarios) > 1 else None,
+            "title": f"Scenario {s.scenario.index + 1}" if len(res.scenarios) > 1 else None,
             "hypotheses": hyp,
             "status": _status(v.altered_copies, len(v.copies)),
             "summary": v.summary[:1].upper() + v.summary[1:],
@@ -164,8 +164,8 @@ def _sample_view(name: str, res: SampleResult, length: int, ref_cds: str,
         sources = res.phase.sources
         evidence = {(e.a, e.b): e for e in res.phase.pairs}
         phase_notes = res.phase.notes + [
-            f"{e.label_a} / {e.label_b} : " + ", ".join(f"{SOURCE_LABELS[k]} {r}" for k, r in e.by_source.items())
-            + f" — retenu : {e.final} ({SOURCE_LABELS[e.retained]})"
+            f"{e.label_a} / {e.label_b}: " + ", ".join(f"{SOURCE_LABELS[k]} {r}" for k, r in e.by_source.items())
+            + f" — kept: {e.final} ({SOURCE_LABELS[e.retained]})"
             for e in res.phase.disagreements
         ]
 
@@ -192,7 +192,7 @@ def _sample_view(name: str, res: SampleResult, length: int, ref_cds: str,
 
 
 def _fit(text: str, n: int) -> str:
-    """Tronque une étiquette à n caractères (vide si moins de 5 caractères tiennent)."""
+    """Cut a label to n characters (empty if fewer than 5 characters fit)."""
     if n < 5:
         return ""
     return text if len(text) <= n else text[: n - 1].rstrip() + "…"
@@ -205,7 +205,7 @@ def _domains(ann: Annotations | None, length: int) -> list[dict]:
     for i, d in enumerate(ann.protein.domains):
         x1, x2 = _x(d.start, length), _x(min(d.end, length), length)
         out.append({"x": round(x1, 1), "w": round(max(x2 - x1, 2), 1), "name": d.name, "acc": d.accession,
-                    "tip": f"{d.name} ({d.accession}) : {d.start}–{d.end}",
+                    "tip": f"{d.name} ({d.accession}): {d.start}–{d.end}",
                     "label": _fit(d.name, int((x2 - x1 - 8) / 6.5)), "alt": i % 2})
     return out
 

@@ -1,9 +1,9 @@
-"""Fige les sources d'annotation des VCF de test dans tests/data/annot/ (conteneur + réseau requis).
+"""Freezes the annotation sources of the test VCFs in tests/data/annot/ (needs the container and the network).
 
-    python tests/make_annotation_fixtures.py [cas …]   # tous les cas par défaut
+    python tests/make_annotation_fixtures.py [case …]   # all cases by default
 
-Pour chaque cas : sortie VEP des sites, lignes ClinVar, lignes dbNSFP (colonnes utiles seulement),
-protéine UniProt + domaines Pfam.
+For each case: VEP output of the sites, ClinVar lines, dbNSFP lines (useful columns only),
+UniProt protein + Pfam domains.
 """
 
 import json
@@ -25,8 +25,8 @@ CASES = {
     "hfe_c282y_h63d": "NM_000410.4",
     "nat2_trio": "NM_000015.3",
 }
-# REVEL et CADD exclus : licences non commerciales, pas de redistribution dans un dépôt public.
-# AlphaMissense est sous CC BY 4.0.
+# REVEL and CADD are excluded: non-commercial licenses, no redistribution in a public repository.
+# AlphaMissense is under CC BY 4.0.
 DBNSFP_COLS = ["chr", "pos(1-based)", "ref", "alt", "Ensembl_transcriptid", "MANE", "AlphaMissense_score"]
 
 

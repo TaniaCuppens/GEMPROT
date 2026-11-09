@@ -1,14 +1,14 @@
-"""Annotations des variants (ClinVar, AlphaMissense, REVEL, CADD) et domaines de la protéine.
+"""Variant annotations (ClinVar, AlphaMissense, REVEL, CADD) and protein domains.
 
-Les bases de données évaluent un variant **isolé**. GEMPROT dit si cet effet isolé est bien celui
-que produit la copie qui le porte : un variant peut être masqué (en aval d'une troncature en cis)
-ou combiné à un autre (même codon, décalage compensé). Dans ces deux cas, son score ne décrit pas
-la protéine réellement produite, et le rapport le signale.
+The databases score a variant **alone** (isolated effect). GEMPROT checks whether this isolated
+effect is the effect of the copy that carries the variant. A variant can be masked (downstream of a
+truncation in cis) or combined with another variant (same codon, compensated frameshift). In these
+two cases, its score does not describe the protein that the copy makes, and the report shows this.
 
-Sources :
-- effet isolé de chaque allèle : `vep` (cache RefSeq, transcrit demandé) ;
-- ClinVar et dbNSFP : `tabix` sur les fichiers partagés (score du transcrit Ensembl MANE) ;
-- domaines : UniProt (via l'identifiant RefSeq NP_) puis InterPro (Pfam), mis en cache (JSON).
+Sources:
+- isolated effect of each allele: `vep` (RefSeq cache, requested transcript).
+- ClinVar and dbNSFP: `tabix` on the shared files (score of the MANE Ensembl transcript).
+- domains: UniProt (from the RefSeq NP_ identifier), then InterPro (Pfam), cached as JSON.
 """
 
 from __future__ import annotations
@@ -26,12 +26,12 @@ from .config import Config
 from .phase import Vcf
 from .tools import ToolError, run_tool
 
-VariantKey = tuple[int, int]  # (indice du variant dans le VCF, allèle)
+VariantKey = tuple[int, int]  # (variant index in the VCF, allele)
 
 TRUNCATING = ("stop_gained", "frameshift", "start_lost")
 
-# Seuils AlphaMissense (Cheng et al., Science 2023)
-AM_CLASSES = ((0.564, "probablement pathogène"), (0.34, "ambigu"), (0.0, "probablement bénin"))
+# AlphaMissense thresholds (Cheng et al., Science 2023)
+AM_CLASSES = ((0.564, "likely pathogenic"), (0.34, "ambiguous"), (0.0, "likely benign"))
 CLINVAR_STARS = {
     "practice_guideline": 4,
     "reviewed_by_expert_panel": 3,
@@ -41,15 +41,15 @@ CLINVAR_STARS = {
 }
 
 
-# --- modèles ------------------------------------------------------------------------------
+# --- models -----------------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class IsolatedEffect:
-    """Effet du variant seul sur le transcrit (VEP)."""
+    """Effect of the variant alone on the transcript (VEP)."""
 
     hgvsc: str | None
-    hgvsp: str | None  # notation GEMPROT : p.Trp7*, p.Pro137Hisfs*8 ; None si non codant
+    hgvsp: str | None  # GEMPROT notation: p.Trp7*, p.Pro137Hisfs*8. None if not coding.
     consequence: str
     protein_start: int | None
 
@@ -115,7 +115,7 @@ class Annotations:
     notes: list[str] = field(default_factory=list)
 
 
-# --- effet isolé : VEP ---------------------------------------------------------------------
+# --- isolated effect: VEP ---------------------------------------------------------------------
 
 
 def sites_id(key: VariantKey) -> str:
@@ -123,7 +123,7 @@ def sites_id(key: VariantKey) -> str:
 
 
 def write_sites_vcf(vcf: Vcf, out: Path) -> Path:
-    """Un allèle par ligne, sans échantillons, ID = clé GEMPROT (pour relire la sortie VEP)."""
+    """One allele per line, no samples, ID = GEMPROT key (to read the VEP output back)."""
     with open(out, "w") as fh:
         fh.write("##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
         for i, rec in enumerate(vcf.records):
@@ -136,7 +136,7 @@ def write_sites_vcf(vcf: Vcf, out: Path) -> Path:
 
 def run_vep(sites: Path, out_json: Path, cfg: Config) -> Path:
     if cfg.fasta is None:
-        raise ToolError("vep a besoin de la FASTA (champ `fasta` de la config)")
+        raise ToolError("vep needs the FASTA file (set the `fasta` field in the config)")
     cmd = [
         "vep", "--cache", "--offline",
         *(["--refseq"] if cfg.vep.cache_type == "refseq" else []),
@@ -153,18 +153,18 @@ def run_vep(sites: Path, out_json: Path, cfg: Config) -> Path:
 
 
 def short_hgvsp(hgvsp: str | None) -> str | None:
-    """`NP_000302.1:p.Trp7Ter` → `p.Trp7*` (notation du reste de GEMPROT)."""
+    """`NP_000302.1:p.Trp7Ter` → `p.Trp7*` (notation used in the rest of GEMPROT)."""
     if not hgvsp:
         return None
     p = hgvsp.split(":", 1)[-1].replace("%3D", "=")
-    return re.sub(r"(?<!p\.)Ter", "*", p)  # p.Ter254Argext*16 : le stop d'origine garde Ter
+    return re.sub(r"(?<!p\.)Ter", "*", p)  # p.Ter254Argext*16: the original stop keeps Ter
 
 
 @dataclass
 class VepResult:
-    effects: dict[str, IsolatedEffect]  # par ID du VCF de sites
+    effects: dict[str, IsolatedEffect]  # by ID in the sites VCF
     protein_id: str | None = None
-    mane_ensembl: str | None = None  # ENST MANE correspondant (pour dbNSFP)
+    mane_ensembl: str | None = None  # matching MANE ENST (for dbNSFP)
 
 
 def parse_vep(path: Path, transcript: str) -> VepResult:
@@ -186,7 +186,7 @@ def parse_vep(path: Path, transcript: str) -> VepResult:
     return res
 
 
-# --- ClinVar et dbNSFP : tabix ----------------------------------------------------------------
+# --- ClinVar and dbNSFP: tabix ----------------------------------------------------------------
 
 
 def _bare(chrom: str) -> str:
@@ -227,7 +227,7 @@ def _float(value: str) -> float | None:
 
 
 def parse_dbnsfp(header: str, lines: Iterable[str], mane_ensembl: str | None) -> dict[tuple, Scores]:
-    """Score du transcrit MANE : colonne `Ensembl_transcriptid`, sinon colonne `MANE` = Select."""
+    """Score of the MANE transcript: column `Ensembl_transcriptid`, else the column `MANE` = Select."""
     cols = {name: i for i, name in enumerate(header.lstrip("#").split("\t"))}
     enst = (mane_ensembl or "").split(".")[0]
     out = {}
@@ -242,7 +242,7 @@ def parse_dbnsfp(header: str, lines: Iterable[str], mane_ensembl: str | None) ->
             continue
 
         def pick(col: str) -> float | None:
-            if col not in cols:  # colonne absente (ex. fixtures publiques sans REVEL/CADD)
+            if col not in cols:  # missing column (e.g. public fixtures without REVEL/CADD)
                 return None
             vals = f[cols[col]].split(";")
             return _float(vals[idx] if len(vals) > idx else vals[0])
@@ -252,7 +252,7 @@ def parse_dbnsfp(header: str, lines: Iterable[str], mane_ensembl: str | None) ->
     return out
 
 
-# --- domaines : UniProt + InterPro (cache JSON par protéine) ------------------------------------------
+# --- domains: UniProt + InterPro (one JSON cache file per protein) ----------------------------
 
 
 def _get_json(url: str, timeout: int = 30):
@@ -281,9 +281,9 @@ def _pfam_domains(uniprot: str) -> list[Domain]:
 
 
 def protein_info(protein_id: str, cache_dir: Path | None, online: bool = True) -> ProteinInfo | None:
-    """UniProt (revu) correspondant au NP_ RefSeq, et ses domaines Pfam ; None si indisponible.
+    """Reviewed UniProt entry for the RefSeq NP_, and its Pfam domains. None if not available.
 
-    Cache : un fichier JSON par protéine (pas de SQLite : le home est souvent sur NFS).
+    Cache: one JSON file per protein. No SQLite, because the home directory is often on NFS.
     """
     cached = cache_dir / f"{protein_id}.json" if cache_dir else None
     if cached and cached.exists():
@@ -312,7 +312,7 @@ def protein_info_from_json(d: dict) -> ProteinInfo:
     return ProteinInfo(d["protein_id"], d.get("uniprot"), d.get("length"), [Domain(**x) for x in d.get("domains", [])])
 
 
-# --- assemblage ---------------------------------------------------------------------------
+# --- assembly ---------------------------------------------------------------------------------
 
 
 def combine(
@@ -323,7 +323,7 @@ def combine(
     protein: ProteinInfo | None,
     protein_length: int | None = None,
 ) -> Annotations:
-    """Partie pure : réunit les sources pour chaque allèle du VCF."""
+    """Pure part: merges the sources for each allele of the VCF."""
     ann = Annotations({}, protein)
     for i, rec in enumerate(vcf.records):
         for a, alt in enumerate(rec.alts, 1):
@@ -336,16 +336,16 @@ def combine(
             )
     if protein and protein.uniprot and protein_length and protein.length != protein_length:
         ann.notes.append(
-            f"UniProt {protein.uniprot} ({protein.length} aa) ne correspond pas à la protéine du transcrit "
-            f"({protein_length} aa) : positions des domaines approximatives"
+            f"UniProt {protein.uniprot} ({protein.length} aa) does not match the transcript protein "
+            f"({protein_length} aa). Domain positions are approximate."
         )
     elif protein is None or not protein.uniprot:
-        ann.notes.append("domaines protéiques indisponibles (hors ligne ou protéine absente d'UniProt)")
+        ann.notes.append("protein domains are not available (offline, or the protein is not in UniProt)")
     return ann
 
 
 def vep_effects(vcf: Vcf, transcript: str, cfg: Config, workdir: Path) -> VepResult:
-    """Effet isolé de chaque allèle du VCF sur le transcrit."""
+    """Isolated effect of each VCF allele on the transcript."""
     sites = write_sites_vcf(vcf, workdir / "sites.vcf")
     return parse_vep(run_vep(sites, workdir / "sites.vep.json", cfg), transcript)
 
@@ -365,12 +365,12 @@ def annotate(
     if (path := cfg.annotations.get("clinvar")) and path.exists():
         clinvar = parse_clinvar(tabix(path, regions, cfg))
     else:
-        notes.append("ClinVar non configuré")
+        notes.append("ClinVar is not configured")
     if (path := cfg.annotations.get("dbnsfp")) and path.exists():
         header = tabix(path, [], cfg, header=True)[-1]
         scores = parse_dbnsfp(header, tabix(path, regions, cfg), vep.mane_ensembl)
     else:
-        notes.append("dbNSFP non configuré (AlphaMissense, REVEL, CADD)")
+        notes.append("dbNSFP is not configured (AlphaMissense, REVEL, CADD)")
     protein = None
     if vep.protein_id:
         try:
@@ -382,36 +382,36 @@ def annotate(
     return ann
 
 
-# --- lecture par copie --------------------------------------------------------------------
+# --- reading per copy -------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class CopyVariant:
     key: VariantKey
-    status: str  # appliqué | masqué | combiné | sans effet protéique | hors CDS
-    effect_on_copy: str | None  # changement de la copie qui contient ce variant (si combiné)
+    status: str  # applied | masked | combined | no protein effect | outside CDS
+    effect_on_copy: str | None  # change of the copy that contains this variant (if combined)
 
     @property
     def misleading(self) -> bool:
-        """L'effet isolé (celui des bases de données) n'est pas celui de cette copie."""
-        return self.status in ("masqué", "combiné")
+        """The isolated effect (the database effect) is not the effect of this copy."""
+        return self.status in ("masked", "combined")
 
 
 def _same_change(isolated: str, ours: str) -> bool:
     if isolated == ours:
         return True
-    # stop perdu : VEP connaît la longueur de l'extension, haplo non (CDS sans 3'UTR)
+    # stop lost: VEP knows the extension length, haplo does not (CDS without 3'UTR)
     return "ext" in isolated and isolated.split("ext")[0] == ours.split("ext")[0]
 
 
 def _span(change: ProteinChange) -> tuple[int, int]:
-    """Positions couvertes : p.Asp167_Glu168delins… → (167, 168)."""
+    """Covered positions: p.Asp167_Glu168delins… → (167, 168)."""
     m = re.match(r"p\.[A-Z][a-z]{2}\d+_[A-Z][a-z]{2}(\d+)", change.hgvs)
     return change.position, int(m.group(1)) if m else change.position
 
 
 def copy_variants(copy: HaplotypeEffect, alleles: dict[int, int], ann: Annotations) -> list[CopyVariant]:
-    """Pour chaque allèle porté par la copie : son effet isolé est-il celui de la copie ?"""
+    """For each allele that the copy carries: is its isolated effect the effect of the copy?"""
     out = []
     for rec, allele in sorted(alleles.items()):
         if not allele:
@@ -419,16 +419,16 @@ def copy_variants(copy: HaplotypeEffect, alleles: dict[int, int], ann: Annotatio
         key = (rec, allele)
         iso = ann.variants.get(key, VariantAnnotation("")).isolated
         if iso is None or iso.protein_start is None:
-            out.append(CopyVariant(key, "hors CDS", None))
+            out.append(CopyVariant(key, "outside CDS", None))
         elif iso.hgvsp and any(_same_change(iso.hgvsp, c.hgvs) for c in copy.changes):
-            out.append(CopyVariant(key, "appliqué", None))
+            out.append(CopyVariant(key, "applied", None))
         elif copy.truncated_at is not None and iso.protein_start > copy.truncated_at + 1:
             cut = min((c for c in copy.changes if c.kind in TRUNCATING), key=lambda c: c.position)
-            out.append(CopyVariant(key, "masqué", cut.hgvs))
+            out.append(CopyVariant(key, "masked", cut.hgvs))
         elif cover := [c for c in copy.changes if _span(c)[0] <= iso.protein_start <= _span(c)[1]]:
-            out.append(CopyVariant(key, "combiné", cover[0].hgvs))
+            out.append(CopyVariant(key, "combined", cover[0].hgvs))
         elif not iso.hgvsp or iso.hgvsp.endswith("="):
-            out.append(CopyVariant(key, "sans effet protéique", None))
+            out.append(CopyVariant(key, "no protein effect", None))
         else:
-            out.append(CopyVariant(key, "combiné", None))  # effet isolé absent de la copie
+            out.append(CopyVariant(key, "combined", None))  # isolated effect is not in the copy
     return out

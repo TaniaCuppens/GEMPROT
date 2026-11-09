@@ -1,7 +1,7 @@
-"""Cas du papier : GJB2 p.Arg75Gln (dominant) + c.35delG (Iossa 2010).
+"""Paper case: GJB2 p.Arg75Gln (dominant) + c.35delG (Iossa 2010).
 
-En cis, c.35delG tronque la protéine avant le codon 75 : R75Q n'a plus d'effet propre et l'autre
-copie est normale. En trans, les deux copies sont altérées.
+In cis, c.35delG truncates the protein before codon 75. R75Q has no effect of its own, and the other
+copy is normal. In trans, both copies have a changed sequence.
 """
 
 from pathlib import Path
@@ -30,23 +30,23 @@ def ref_cds():
 def test_reference_protein(ref_cds):
     prot = translate(ref_cds)
     assert prot.startswith("MDWGTLQTILGGVNK") and prot.endswith("*")
-    assert len(prot) == 227  # 226 acides aminés + stop (NP_003995.2)
+    assert len(prot) == 227  # 226 amino acids + stop (NP_003995.2)
 
 
 def test_35delG_hgvs_is_3prime_shifted(verdicts, ref_cds):
     trunc = next(c for c in verdicts["TRANS"].copies if c.truncated_at)
     delg = next(d for d in trunc.haplotype.diffs if "del" in d.diff)
-    assert delg.diff == "30delG"  # haplo aligne à gauche
+    assert delg.diff == "30delG"  # haplo aligns to the left
     assert hgvs_c(delg, ref_cds) == "c.35del"
 
 
 def test_cis_masks_r75q(verdicts):
     v = verdicts["CIS"]
     labels = sorted(c.label for c in v.copies)
-    assert labels == ["p.Gly12Valfs*2", "référence"]
+    assert labels == ["p.Gly12Valfs*2", "reference"]
     trunc = next(c for c in v.copies if c.altered)
     assert trunc.truncated_at == 11
-    assert [d.diff for d in trunc.masked] == ["224G>A"]  # R75Q masqué en cis
+    assert [d.diff for d in trunc.masked] == ["224G>A"]  # R75Q masked in cis
     assert v.altered_copies == 1
 
 
@@ -59,5 +59,5 @@ def test_trans_alters_both_copies(verdicts):
 
 def test_r75q_alone(verdicts):
     v = verdicts["R75Q_SEUL"]
-    assert sorted(c.label for c in v.copies) == ["p.Arg75Gln", "référence"]
+    assert sorted(c.label for c in v.copies) == ["p.Arg75Gln", "reference"]
     assert v.altered_copies == 1

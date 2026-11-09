@@ -1,5 +1,5 @@
-"""Lecture de la config (GEMPROT_CONFIG, sinon config/gemprot.yaml, hors git) ;
-les chemins relatifs sont résolus depuis la racine du projet. Modèle : config/gemprot.example.yaml."""
+"""Reads the config (GEMPROT_CONFIG, else config/gemprot.yaml, not in git).
+Relative paths start from the project root. Template: config/gemprot.example.yaml."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ class Config:
     vep: VepConfig
     fasta: Path | None
     annotations: dict[str, Path]
-    binds: tuple[Path, ...]  # dossiers à monter dans le conteneur
+    binds: tuple[Path, ...]  # directories to mount in the container
 
 
 def _path(value: str | None, root: Path) -> Path | None:
@@ -41,7 +41,7 @@ def _path(value: str | None, root: Path) -> Path | None:
 def load(path: Path | str = DEFAULT_CONFIG, root: Path = PROJECT_ROOT) -> Config:
     path = Path(path)
     if not path.exists():
-        raise FileNotFoundError(f"config introuvable : {path} (copier {EXAMPLE_CONFIG} et adapter les chemins)")
+        raise FileNotFoundError(f"config not found: {path} (copy {EXAMPLE_CONFIG} and change the paths)")
     raw = yaml.safe_load(path.read_text())
     v = raw["vep"]
     vep = VepConfig(

@@ -1,13 +1,12 @@
-"""Audit de la phase d'un VCF et scénarios cis/trans.
+"""Audit of the phase in a VCF, and cis/trans scenarios.
 
-Une phase n'est crue que si elle est démontrée : deux hétérozygotes `|` ne sont phasés entre eux
-que s'ils sont dans le même bloc `PS` (ou si le VCF n'a pas de champ PS : phase supposée globale,
-ce qui est le cas d'un phasage statistique ou par trio). Un génotype non phasé `/` ou un bloc à
-part peut être retourné : chaque combinaison possible est un **scénario**.
+GEMPROT accepts a phase only when the data shows it. Two `|` heterozygotes are phased with each
+other only if they are in the same `PS` block. If the VCF has no PS field, the phase is assumed
+global, as with statistical or trio phasing. An unphased `/` genotype or a separate block can be
+flipped. Each possible combination is a **scenario**.
 
-Pour que haplo ne puisse pas réutiliser une phase non démontrée, chaque copie de chaque scénario
-est écrite comme un pseudo-échantillon homozygote (`a|a`) dans un VCF intermédiaire ; on sait
-ainsi exactement quelle protéine correspond à quelle copie.
+haplo must not use a phase that the data does not show. Thus each copy of each scenario goes into
+an intermediate VCF as a homozygous pseudo-sample (`a|a`). Then each protein maps to one known copy.
 """
 
 from __future__ import annotations
@@ -20,14 +19,14 @@ from pathlib import Path
 MAX_SCENARIOS = 16
 
 
-# --- lecture du VCF -----------------------------------------------------------------------
+# --- VCF reading --------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class Genotype:
-    alleles: tuple[int | None, ...]  # None = allèle manquant ; 1 élément si haploïde
+    alleles: tuple[int | None, ...]  # None = missing allele. 1 item if haploid
     phased: bool
-    ps: str | None  # bloc de phase ; None si absent ou '.'
+    ps: str | None  # phase block. None if absent or '.'
 
     @property
     def carried(self) -> set[int]:
@@ -51,11 +50,11 @@ class Record:
 
 @dataclass
 class Vcf:
-    meta: list[str]  # lignes ## (sans les FORMAT, réécrites)
+    meta: list[str]  # ## lines (FORMAT lines removed, GEMPROT writes them again)
     samples: list[str]
     records: list[Record]
     has_ps: bool
-    ps_desc: dict[str, str] = field(default_factory=dict)  # bloc PS → description (phase fusionnée)
+    ps_desc: dict[str, str] = field(default_factory=dict)  # PS block → description (fused phase)
 
 
 def _parse_gt(gt: str, ps: str | None) -> Genotype:
@@ -63,7 +62,7 @@ def _parse_gt(gt: str, ps: str | None) -> Genotype:
     sep = "|" if phased else "/"
     alleles = tuple(None if a == "." else int(a) for a in gt.split(sep))
     if len(alleles) == 1:
-        phased = True  # haploïde : rien à phaser
+        phased = True  # haploid: nothing to phase
     return Genotype(alleles, phased, None if ps in (None, ".", "") else ps)
 
 
@@ -92,17 +91,17 @@ def read_vcf(path: Path | str) -> Vcf:
     return Vcf(meta, samples, records, has_ps)
 
 
-# --- audit par individu ---------------------------------------------------------------------
+# --- audit per sample -----------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class Call:
-    """Un allèle alternatif porté par l'individu, et les copies qui le portent (orientation de base)."""
+    """An alternative allele that the sample carries, and the copies that carry it (base orientation)."""
 
-    record: int  # indice dans Vcf.records
+    record: int  # index in Vcf.records
     allele: int
-    copies: frozenset[int]  # 0 = gauche du '|', 1 = droite
-    unit: int | None  # unité de phase (None : homozygote ou haploïde, rien à orienter)
+    copies: frozenset[int]  # 0 = left of '|', 1 = right
+    unit: int | None  # phase unit (None: homozygous or haploid, nothing to orient)
     label: str
 
 
@@ -110,7 +109,7 @@ class Call:
 class PairPhase:
     a: Call
     b: Call
-    relation: str  # cis, trans, homozygote, inconnue
+    relation: str  # cis, trans, homozygous, unknown
     reason: str
 
 
@@ -119,13 +118,13 @@ class SampleAudit:
     sample: str
     ploidy: int
     calls: list[Call]
-    units: list[str]  # description de chaque unité de phase
+    units: list[str]  # description of each phase unit
     pairs: list[PairPhase]
     notes: list[str] = field(default_factory=list)
-    # génotype de base par variant : allèles de la copie 0 et de la copie 1
+    # base genotype per variant: alleles of copy 0 and copy 1
     base: dict[int, tuple[int, ...]] = field(default_factory=dict)
     unit_of: dict[int, int] = field(default_factory=dict)
-    # allèles manquants : (variant, copie dans l'orientation du VCF, allèle testé, nom)
+    # missing alleles: (variant, copy in the VCF orientation, tested allele, name)
     missing: list[tuple[int, int, int, str]] = field(default_factory=list)
 
     @property
@@ -147,12 +146,15 @@ def audit_sample(vcf: Vcf, sample: str) -> SampleAudit:
         gt = rec.genotypes[sample]
         ploidy = max(ploidy, len(gt.alleles))
         if None in gt.alleles:
-            what = "manquant" if all(a is None for a in gt.alleles) else "partiellement manquant"
+            what = "missing" if all(a is None for a in gt.alleles) else "partly missing"
             if len(rec.alts) == 1:
-                notes.append(f"{rec.label(1)} : génotype {what}, présence et absence testées")
+                notes.append(f"{rec.label(1)}: genotype {what}. GEMPROT tests presence and absence")
                 missing += [(i, c, 1, rec.label(1)) for c, a in enumerate(gt.alleles) if a is None]
             else:
-                notes.append(f"{rec.label(1)} : génotype {what} sur un site multi-allélique, copie inconnue supposée de référence")
+                notes.append(
+                    f"{rec.label(1)}: genotype {what} at a multi-allelic site. "
+                    "GEMPROT assumes the reference allele on the unknown copy"
+                )
         if not gt.carried and None not in gt.alleles:
             continue
         alleles = tuple(a or 0 for a in gt.alleles)
@@ -161,13 +163,13 @@ def audit_sample(vcf: Vcf, sample: str) -> SampleAudit:
         unit = None
         if het:
             if not gt.phased:
-                key, desc = ("unphased", i), f"{rec.label(max(gt.carried))} (non phasé)"
+                key, desc = ("unphased", i), f"{rec.label(max(gt.carried))} (unphased)"
             elif vcf.has_ps and gt.ps is None:
-                key, desc = ("unphased", i), f"{rec.label(max(gt.carried))} (phasé sans bloc PS)"
+                key, desc = ("unphased", i), f"{rec.label(max(gt.carried))} (phased, no PS block)"
             elif vcf.has_ps:
-                key, desc = ("ps", gt.ps), vcf.ps_desc.get(gt.ps, f"bloc PS {gt.ps}")
+                key, desc = ("ps", gt.ps), vcf.ps_desc.get(gt.ps, f"PS block {gt.ps}")
             else:
-                key, desc = ("global",), "phase du VCF (pas de champ PS : supposée globale)"
+                key, desc = ("global",), "VCF phase (no PS field: assumed global)"
             if key not in units:
                 units[key] = len(unit_desc)
                 unit_desc.append(desc)
@@ -184,26 +186,26 @@ def audit_sample(vcf: Vcf, sample: str) -> SampleAudit:
         if a.record == b.record:
             continue
         if ploidy == 1:
-            pairs.append(PairPhase(a, b, "cis", "haploïde"))
+            pairs.append(PairPhase(a, b, "cis", "haploid"))
         elif len(a.copies) == ploidy or len(b.copies) == ploidy:
-            pairs.append(PairPhase(a, b, "homozygote", "un des variants est sur les deux copies"))
+            pairs.append(PairPhase(a, b, "homozygous", "one variant is on both copies"))
         elif a.unit == b.unit:
             rel = "cis" if a.copies & b.copies else "trans"
             pairs.append(PairPhase(a, b, rel, unit_desc[a.unit]))
         else:
-            pairs.append(PairPhase(a, b, "inconnue", f"{unit_desc[a.unit]} / {unit_desc[b.unit]}"))
+            pairs.append(PairPhase(a, b, "unknown", f"{unit_desc[a.unit]} / {unit_desc[b.unit]}"))
     return SampleAudit(sample, ploidy, calls, unit_desc, pairs, notes, base, unit_of, missing)
 
 
-# --- scénarios ------------------------------------------------------------------------------
+# --- scenarios ------------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class Scenario:
     index: int
-    flipped: frozenset[int]  # unités retournées par rapport à l'orientation du VCF
-    copies: tuple[dict[int, int], ...]  # par copie : indice de variant → allèle
-    assumptions: tuple[str, ...] = ()  # hypothèses sur les allèles manquants
+    flipped: frozenset[int]  # units flipped relative to the VCF orientation
+    copies: tuple[dict[int, int], ...]  # per copy: variant index → allele
+    assumptions: tuple[str, ...] = ()  # assumptions about missing alleles
 
     def relation(self, a: Call, b: Call) -> str:
         ca = {c for c, alleles in enumerate(self.copies) if alleles.get(a.record) == a.allele}
@@ -214,11 +216,11 @@ class Scenario:
 def scenarios(audit: SampleAudit, max_scenarios: int = MAX_SCENARIOS) -> list[Scenario]:
     if audit.n_scenarios > max_scenarios:
         raise ValueError(
-            f"{audit.sample} : {len(audit.units)} unités de phase indépendantes, "
-            f"{audit.n_scenarios} scénarios (> {max_scenarios}) ; il faut phaser ce gène"
+            f"{audit.sample}: {len(audit.units)} independent phase units, "
+            f"{audit.n_scenarios} scenarios (> {max_scenarios}). Phase this gene first"
         )
     out = []
-    others = range(1, len(audit.units))  # la 1re unité fixe l'orientation (symétrie)
+    others = range(1, len(audit.units))  # the 1st unit sets the orientation (symmetry)
     flips = itertools.product((False, True), repeat=len(others))
     fills = list(itertools.product((False, True), repeat=len(audit.missing)))
     for k, (flip, fill) in enumerate(itertools.product(flips, fills)):
@@ -229,7 +231,7 @@ def scenarios(audit: SampleAudit, max_scenarios: int = MAX_SCENARIOS) -> list[Sc
             if present:
                 base[rec][c] = allele
             final = len(base[rec]) - 1 - c if audit.unit_of.get(rec) in flipped else c
-            assumptions.append(f"{label} {'présent' if present else 'absent'} sur la copie {final + 1}")
+            assumptions.append(f"{label} {'present' if present else 'absent'} on copy {final + 1}")
         copies: tuple[dict[int, int], ...] = tuple({} for _ in range(audit.ploidy))
         for rec, alleles in base.items():
             if audit.unit_of.get(rec) in flipped:
@@ -240,7 +242,7 @@ def scenarios(audit: SampleAudit, max_scenarios: int = MAX_SCENARIOS) -> list[Sc
     return out
 
 
-# --- VCF de pseudo-échantillons pour haplo -----------------------------------------------------
+# --- pseudo-sample VCF for haplo --------------------------------------------------------------
 
 SEP = "::"
 
@@ -255,7 +257,7 @@ def parse_pseudo_name(name: str) -> tuple[str, int, int]:
 
 
 def write_scenario_vcf(vcf: Vcf, plan: dict[str, list[Scenario]], out: Path) -> Path:
-    """Une colonne par (individu, scénario, copie), génotype homozygote `a|a`."""
+    """One column per (sample, scenario, copy), with a homozygous `a|a` genotype."""
     columns = [
         (pseudo_name(sample, sc.index, c), sc.copies[c])
         for sample, scs in plan.items()

@@ -1,4 +1,4 @@
-"""Lecture d'une FASTA indexée (.fai), sans dépendance ; accepte « 13 » ou « chr13 »."""
+"""Reads an indexed FASTA (.fai) with no dependency. Accepts "13" or "chr13"."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ class Fasta:
         raise KeyError(f"chromosome {chrom} absent de {self.path}")
 
     def fetch(self, chrom: str, start: int, end: int) -> str:
-        """Séquence 1-based inclusive [start, end]."""
+        """1-based inclusive sequence [start, end]."""
         length, offset, bases, width = self.index[self._name(chrom)]
         start, end = max(start, 1), min(end, length)
         first = offset + (start - 1) // bases * width + (start - 1) % bases

@@ -1,4 +1,4 @@
-"""Rapport HTML : autonome (aucune ressource externe) et fidèle aux résultats."""
+"""HTML report: self-contained (no external resources) and true to the results."""
 
 import re
 from pathlib import Path
@@ -25,9 +25,9 @@ def test_report_is_self_contained(tmp_path):
 
 def test_report_content(tmp_path):
     page = _render(tmp_path)
-    assert "GEMPROT · NM_004004.6" in page and "226 acides aminés" in page
-    assert page.count('class="card" id="s-') == 7  # un bloc par individu
-    assert "Conclusion dépendante de la phase" in page  # PS_DIFFERENTS, NON_PHASE, MANQUANT
+    assert "GEMPROT · NM_004004.6" in page and "226 amino acids" in page
+    assert page.count('class="card" id="s-') == 7  # one block per sample
+    assert "Conclusion depends on the phase" in page  # PS_DIFFERENTS, NON_PHASE, MANQUANT
     assert "Gly12Valfs*2" in page and "c.224G&gt;A" in page
-    assert "sans effet propre" in page  # info-bulle du variant masqué
-    assert page.count("Scénario 2") == 3
+    assert "no effect of its own" in page  # tooltip of the masked variant
+    assert page.count("Scenario 2") == 3

@@ -1,7 +1,7 @@
-"""Audit de la phase (GT + PS) et scénarios cis/trans, sur GJB2 p.Arg75Gln + c.35delG.
+"""Phase audit (GT + PS) and cis/trans scenarios, on GJB2 p.Arg75Gln + c.35delG.
 
-Les sorties haplo des VCF de scénarios sont figées dans tests/data/haplo/ ; pour les régénérer,
-lancer haplo sur tests/data/haplo/*.scenarios.vcf (voir test_container_regenerates_fixture).
+tests/data/haplo/ keeps frozen haplo outputs of the scenario VCFs. To make them again,
+run haplo on tests/data/haplo/*.scenarios.vcf (see test_container_regenerates_fixture).
 """
 
 import os
@@ -40,7 +40,7 @@ def _labels(scenario_result):
 def test_same_ps_cis(cases):
     r = cases["CIS_MEME_PS"]
     assert _relation(r) == "cis" and len(r.scenarios) == 1
-    assert _labels(r.scenarios[0]) == ["p.Gly12Valfs*2", "référence"]
+    assert _labels(r.scenarios[0]) == ["p.Gly12Valfs*2", "reference"]
     assert r.scenarios[0].verdict.altered_copies == 1
 
 
@@ -51,7 +51,7 @@ def test_same_ps_trans(cases):
 
 
 def test_copy_order_follows_vcf(cases):
-    """Copie 1 = gauche du '|' : TRANS_MEME_PS est 0|1 pour R75Q et 1|0 pour c.35delG."""
+    """Copy 1 = left of '|': TRANS_MEME_PS is 0|1 for R75Q and 1|0 for c.35delG."""
     copies = cases["TRANS_MEME_PS"].scenarios[0].verdict.copies
     assert [c.label for c in copies] == ["p.Gly12Valfs*2", "p.Arg75Gln"]
 
@@ -59,29 +59,29 @@ def test_copy_order_follows_vcf(cases):
 @pytest.mark.parametrize("sample", ["PS_DIFFERENTS", "NON_PHASE"])
 def test_unknown_phase_gives_both_scenarios(cases, sample):
     r = cases[sample]
-    assert _relation(r) == "inconnue"
+    assert _relation(r) == "unknown"
     by_relation = {s.relations[0][2]: s for s in r.scenarios}
     assert set(by_relation) == {"cis", "trans"}
     assert by_relation["cis"].verdict.altered_copies == 1
     assert by_relation["trans"].verdict.altered_copies == 2
-    assert not r.conclusive  # le diagnostic dépend de la phase : il faut le dire
+    assert not r.conclusive  # the diagnosis depends on the phase: the output must tell it
 
 
 def test_homozygous(cases):
     r = cases["HOMOZYGOTE"]
-    assert _relation(r) == "homozygote" and len(r.scenarios) == 1
+    assert _relation(r) == "homozygous" and len(r.scenarios) == 1
     assert _labels(r.scenarios[0]) == ["p.Arg75Gln", "p.Gly12Valfs*2"]
 
 
 def test_partially_missing_gives_both_possibilities(cases):
-    """R75Q 1|0 et c.35delG 0|. : la copie 2 peut porter ou non c.35delG."""
+    """R75Q 1|0 and c.35delG 0|.: copy 2 can carry c.35delG or not."""
     r = cases["MANQUANT"]
-    assert r.audit.pairs == []  # c.35delG n'est porté par aucune copie connue
-    assert any(DEL35 in n and "partiellement manquant" in n for n in r.audit.notes)
+    assert r.audit.pairs == []  # no known copy carries c.35delG
+    assert any(DEL35 in n and "partly missing" in n for n in r.audit.notes)
     by_assumption = {s.scenario.assumptions: s for s in r.scenarios}
-    absent = by_assumption[(f"{DEL35} absent sur la copie 2",)]
-    present = by_assumption[(f"{DEL35} présent sur la copie 2",)]
-    assert _labels(absent) == ["p.Arg75Gln", "référence"]
+    absent = by_assumption[(f"{DEL35} absent on copy 2",)]
+    present = by_assumption[(f"{DEL35} present on copy 2",)]
+    assert _labels(absent) == ["p.Arg75Gln", "reference"]
     assert _labels(present) == ["p.Arg75Gln", "p.Gly12Valfs*2"]
     assert not r.conclusive
 
@@ -91,19 +91,19 @@ def test_haploid(cases):
     assert _relation(r) == "cis" and r.audit.ploidy == 1
     (copy,) = r.scenarios[0].verdict.copies
     assert copy.label == "p.Gly12Valfs*2" and [d.diff for d in copy.masked] == ["224G>A"]
-    assert r.scenarios[0].verdict.summary == "la copie à séquence modifiée"
+    assert r.scenarios[0].verdict.summary == "the copy has a changed sequence"
 
 
 def test_vcf_without_ps_is_globally_phased():
     res = _results("gjb2_r75q_35delG")
     assert _relation(res["CIS"]) == "cis"
     assert _relation(res["TRANS"]) == "trans"
-    assert "supposée globale" in res["CIS"].audit.units[0]
+    assert "assumed global" in res["CIS"].audit.units[0]
 
 
 def test_too_many_scenarios():
     calls = phase.SampleAudit("X", 2, [], [f"u{i}" for i in range(6)], [])
-    with pytest.raises(ValueError, match="il faut phaser"):
+    with pytest.raises(ValueError, match="Phase this gene"):
         phase.scenarios(calls)
 
 
@@ -112,9 +112,9 @@ def test_pseudo_name_roundtrip():
 
 
 @pytest.mark.container
-@pytest.mark.skipif(not os.environ.get("GEMPROT_CONTAINER_TESTS"), reason="GEMPROT_CONTAINER_TESTS non défini")
+@pytest.mark.skipif(not os.environ.get("GEMPROT_CONTAINER_TESTS"), reason="GEMPROT_CONTAINER_TESTS is not set")
 def test_container_regenerates_fixture(tmp_path):
-    """Chaîne complète avec haplo : même résultat que la sortie figée."""
+    """Full pipeline with haplo: same result as the frozen output."""
     from gemprot import config
 
     live = indiv.run(DATA / "gjb2_phase_cases.grch38.vcf", MANE, config.load(), tmp_path)

@@ -1,4 +1,4 @@
-# Environnement de développement (les outils lourds — vep/haplo — viennent du conteneur)
+# Development environment (the large tools, vep and haplo, come from the container)
 name: gemprot2
 channels:
   - conda-forge

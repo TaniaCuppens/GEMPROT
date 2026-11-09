@@ -1,9 +1,9 @@
-# Image gemprot : paquet Python + vep/haplo, bcftools/htslib, WhatsHap, HiPhase, SHAPEIT5.
-# Les données (cache VEP, FASTA, ClinVar, dbNSFP) restent à part : voir config/gemprot.image.yaml.
+# gemprot image: Python package + vep/haplo, bcftools/htslib, WhatsHap, HiPhase, SHAPEIT5.
+# The data (VEP cache, FASTA, ClinVar, dbNSFP) stay outside the image. See config/gemprot.image.yaml.
 FROM mambaorg/micromamba:2.0.5
 
 LABEL org.opencontainers.image.source="https://github.com/TaniaCuppens/GEMPROT" \
-      org.opencontainers.image.description="GEMPROT 2 : les deux protéines d'un individu à partir d'un VCF phasé" \
+      org.opencontainers.image.description="GEMPROT 2: the two proteins of a sample from a phased VCF" \
       org.opencontainers.image.licenses="GPL-3.0-or-later"
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER environment.image.yml /tmp/env.yml
@@ -15,6 +15,6 @@ COPY --chown=$MAMBA_USER:$MAMBA_USER src /opt/gemprot/src
 COPY --chown=$MAMBA_USER:$MAMBA_USER config/gemprot.image.yaml /opt/gemprot/gemprot.yaml
 RUN pip install --no-deps --no-cache-dir /opt/gemprot
 
-# singularity exec ne passe pas par l'entrypoint micromamba : PATH explicite
+# singularity exec does not use the micromamba entrypoint. Set PATH explicitly.
 ENV PATH=/opt/conda/bin:$PATH \
     GEMPROT_CONFIG=/opt/gemprot/gemprot.yaml

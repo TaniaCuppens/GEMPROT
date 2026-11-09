@@ -1,14 +1,15 @@
-"""Variants retenus pour les scénarios de phase : ceux qui peuvent changer la protéine.
+"""Variants kept for the phase scenarios: the variants that can change the protein.
 
-Un variant hors CDS (intron, UTR, amont) ne change pas la séquence traduite par haplo : hétérozygote
-non phasé, il double le nombre de scénarios sans changer leurs protéines. Un synonyme non plus,
-sauf s'il partage un codon avec un autre variant (effet combiné).
+A variant outside the CDS (intron, UTR, upstream) does not change the sequence that haplo translates.
+An unphased heterozygous variant of this type doubles the number of scenarios, but does not change
+their proteins. A synonymous variant also does not change the protein, unless it shares a codon with
+another variant (combined effect).
 
-On garde donc les sites dont un allèle est codant et change la protéine, plus les synonymes qui
-partagent un codon avec un autre site codant. Les autres sont listés à part ; les variants
-d'épissage y sont signalés (effet non modélisé).
+Thus the code keeps the sites with a coding allele that changes the protein. It also keeps the
+synonymous variants that share a codon with another coding site. The other sites go in a separate
+list. That list flags the splice variants, because GEMPROT does not model their effect.
 
-Le tri a lieu après la fusion de la phase : un variant intronique phasé peut relier deux blocs.
+The selection occurs after the phase fusion: a phased intronic variant can link two blocks.
 """
 
 from __future__ import annotations
@@ -24,10 +25,10 @@ SPLICE = ("splice_acceptor_variant", "splice_donor_variant", "splice_donor_5th_b
 
 @dataclass(frozen=True)
 class Outside:
-    """Site écarté des scénarios."""
+    """Site excluded from the scenarios."""
 
     record: Record
-    consequence: str  # conséquence VEP sur le transcrit, ou « hors transcrit »
+    consequence: str  # VEP consequence on the transcript, or "outside transcript"
 
     @property
     def splice(self) -> bool:
@@ -44,7 +45,7 @@ def _neutral(effect: IsolatedEffect) -> bool:
 
 
 def protein_records(vcf: Vcf, vep: VepResult) -> tuple[list[int], list[Outside]]:
-    """Indices des sites gardés, et sites écartés."""
+    """Indices of the kept sites, and the excluded sites."""
     effects = {index: _effects(vcf, vep, index) for index in range(len(vcf.records))}
     coding = {
         index: [effect for effect in site_effects if effect.protein_start is not None]
@@ -60,7 +61,7 @@ def protein_records(vcf: Vcf, vep: VepResult) -> tuple[list[int], list[Outside]]
 
     keep = [index for index in effects if changes_protein(index)]
     outside = [
-        Outside(vcf.records[index], effects[index][0].consequence if effects[index] else "hors transcrit")
+        Outside(vcf.records[index], effects[index][0].consequence if effects[index] else "outside transcript")
         for index in effects
         if not changes_protein(index)
     ]

@@ -1,15 +1,15 @@
-# Config par défaut de l'image gemprot (GEMPROT_CONFIG). Outils sur le PATH : pas de conteneur.
-# Monter les données sous /data (singularity -B /chemin/données:/data, docker -v …:/data)
-# ou fournir sa propre config avec --config / GEMPROT_CONFIG.
+# Default config of the gemprot image (GEMPROT_CONFIG). The tools are on the PATH: no container.
+# Mount the data under /data (singularity -B /path/to/data:/data, docker -v …:/data)
+# or give your own config with --config / GEMPROT_CONFIG.
 assembly: GRCh38
 
 vep:
   container: null
-  cache_dir: /data/vep          # cache VEP RefSeq 115 ; doit être accessible en écriture (haplo y crée un index)
+  cache_dir: /data/vep          # VEP RefSeq 115 cache. It must be writable (haplo creates an index in it).
   cache_type: refseq
   cache_version: 115
 
-fasta: /data/reference/Homo_sapiens.GRCh38.fa   # indexée (.fai)
+fasta: /data/reference/Homo_sapiens.GRCh38.fa   # indexed (.fai)
 
 annotations:
   clinvar: /data/clinvar/clinvar.vcf.gz

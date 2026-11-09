@@ -1,10 +1,10 @@
-"""Effet de chaque haplotype sur la protéine, et verdict par individu.
+"""Effect of each haplotype on the protein, and verdict per sample.
 
-On traduit la CDS de référence et celle de l'haplotype (fournie par haplo), puis on décrit la
-différence en HGVS protéine. On repère aussi les effets combinés en cis :
-- variant « masqué » : en aval d'un stop ou d'un décalage du cadre sur le même haplotype,
-  il n'a plus d'effet propre (cas GJB2 R75Q + c.35delG, Iossa 2010) ;
-- décalage du cadre compensé : deux indels en cis dont la somme garde le cadre.
+The code translates the reference CDS and the haplotype CDS (from haplo). Then it describes the
+difference in protein HGVS. It also finds the combined effects in cis:
+- "masked" variant: downstream of a stop or a frameshift on the same haplotype, the variant has no
+  effect of its own (GJB2 R75Q + c.35delG, Iossa 2010).
+- compensated frameshift: two indels in cis whose sum keeps the reading frame.
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ THREE = {
 
 
 def translate(cds: str) -> str:
-    """Traduit jusqu'au premier stop inclus ('*') ; sans stop, s'arrête au dernier codon complet."""
+    """Translates up to the first stop, included ('*'). Without a stop, stops at the last full codon."""
     prot = []
     for i in range(0, len(cds) - 2, 3):
         aa = CODON_TABLE.get(cds[i : i + 3].upper(), "X")
@@ -41,11 +41,11 @@ def translate(cds: str) -> str:
 
 
 def _aa(seq: str, i: int) -> str:
-    """Acide aminé en position 0-based i, en code à 3 lettres avec sa position 1-based."""
+    """Amino acid at 0-based position i, as a 3-letter code with its 1-based position."""
     return f"{THREE[seq[i]]}{i + 1}"
 
 
-# --- différences en coordonnées CDS (notation haplo) ------------------------------------
+# --- differences in CDS coordinates (haplo notation) ------------------------------------------
 
 _DIFF_RE = re.compile(
     r"^(?P<pos>\d+)(?:(?P<ref>[ACGTN]+)>(?P<alt>[ACGTN]+)|del(?P<del>[ACGTN]+|\{\d+\})|ins(?P<ins>[ACGTN]+|\{\d+\}))$"
@@ -59,8 +59,8 @@ def _seq_len(s: str) -> int:
 @dataclass(frozen=True)
 class ParsedDiff:
     raw: CdsDiff
-    pos: int  # position CDS 1-based
-    length_change: int | None  # None si la notation n'est pas reconnue
+    pos: int  # 1-based CDS position
+    length_change: int | None  # None if the notation is not known
 
     @property
     def codon(self) -> int:
@@ -86,7 +86,7 @@ def parse_diff(d: CdsDiff) -> ParsedDiff:
 
 
 def hgvs_c(d: CdsDiff, ref_cds: str) -> str:
-    """Notation HGVS c. ; les délétions sont décalées en 3' comme le veut HGVS (haplo les aligne à gauche)."""
+    """HGVS c. notation. Deletions move to the 3' end, as HGVS requires (haplo aligns them to the left)."""
     m = _DIFF_RE.match(d.diff)
     if m and m["del"] and not m["del"].startswith("{"):
         start, seq = int(m["pos"]), m["del"]
@@ -99,14 +99,14 @@ def hgvs_c(d: CdsDiff, ref_cds: str) -> str:
     return f"c.{d.diff}"
 
 
-# --- effet protéique d'un haplotype -------------------------------------------------------
+# --- protein effect of a haplotype ------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class ProteinChange:
     kind: str  # missense, stop_gained, stop_lost, start_lost, inframe_indel, frameshift
     hgvs: str
-    position: int  # premier acide aminé touché (1-based)
+    position: int  # first amino acid that changes (1-based)
 
 
 @dataclass
@@ -114,8 +114,8 @@ class HaplotypeEffect:
     haplotype: CdsHaplotype
     protein: str
     changes: list[ProteinChange] = field(default_factory=list)
-    truncated_at: int | None = None  # dernier acide aminé normal avant la perte de la protéine
-    masked: list[CdsDiff] = field(default_factory=list)  # variants sans effet propre (en aval)
+    truncated_at: int | None = None  # last normal amino acid before the protein is lost
+    masked: list[CdsDiff] = field(default_factory=list)  # variants without an effect of their own (downstream)
     compensated_frameshift: bool = False
 
     @property
@@ -125,9 +125,9 @@ class HaplotypeEffect:
     @property
     def label(self) -> str:
         if not self.haplotype.diffs:
-            return "référence"
+            return "reference"
         if not self.changes:
-            return "synonyme"
+            return "synonymous"
         return ", ".join(c.hgvs for c in self.changes)
 
 
@@ -140,9 +140,9 @@ def _substitutions(ref: str, hap: str, offset: int = 0) -> list[ProteinChange]:
 
 
 def _inframe(ref_p: str, hap_p: str, net: int = 0) -> list[ProteinChange]:
-    """Différences sans décalage du cadre : substitutions, stop gagné/perdu, indels en phase.
+    """Differences without a frameshift: substitutions, stop gained or lost, in-frame indels.
 
-    `net` : variation de longueur de la CDS (multiple de 3) ; non nulle → indel en phase.
+    `net`: change of the CDS length (a multiple of 3). A value that is not zero means an in-frame indel.
     """
     if ref_p == hap_p:
         return []
@@ -153,14 +153,14 @@ def _inframe(ref_p: str, hap_p: str, net: int = 0) -> list[ProteinChange]:
         ext = hap_p[k:]
         tail = f"*{len(ext) - 1}" if ext.endswith("*") else "*?"
         return [ProteinChange("stop_lost", f"p.Ter{k + 1}{THREE[ext[0]]}ext{tail}", k + 1)]
-    # stop gagné : la protéine s'arrête plus tôt, le reste est comparé position à position
+    # stop gained: the protein stops earlier. The code compares the rest position by position.
     if net == 0 and hap_p.endswith("*") and len(hap_p) < len(ref_p):
         k = len(hap_p) - 1
         changes = _substitutions(ref_p[:k], hap_p[:k])
         return changes + [ProteinChange("stop_gained", f"p.{_aa(ref_p, k)}*", k + 1)]
     if net == 0 and len(ref_p) == len(hap_p):
         return _substitutions(ref_p, hap_p)
-    # indel en phase, ou stop perdu : on retire le préfixe et le suffixe communs
+    # in-frame indel, or stop lost: remove the common prefix and suffix
     i = 0
     while i < min(len(ref_p), len(hap_p)) and ref_p[i] == hap_p[i]:
         i += 1
@@ -193,12 +193,12 @@ def haplotype_effect(hap: CdsHaplotype, ref_cds: str) -> HaplotypeEffect:
 
     if fs_codon is None:
         effect.changes = _inframe(ref_p, hap_p, net)
-        # deux indels en cis qui se compensent, sans stop entre les deux
+        # two indels in cis that compensate, with no stop between them
         effect.compensated_frameshift = bool(frameshifts) and not any(
             c.kind == "stop_gained" for c in effect.changes
         )
         if effect.compensated_frameshift:
-            # un seul événement entre les deux indels : décrit en delins (HGVS)
+            # one event between the two indels: describe it as delins (HGVS)
             lo, hi = frameshifts[0].codon, frameshifts[-1].codon
             inside = [c for c in effect.changes if lo <= c.position <= hi and c.kind == "missense"]
             if len(inside) > 1:
@@ -211,10 +211,10 @@ def haplotype_effect(hap: CdsHaplotype, ref_cds: str) -> HaplotypeEffect:
                     [c for c in effect.changes if c not in inside] + [merged], key=lambda c: c.position
                 )
     else:
-        # en amont du décalage : comparaison en phase ; à partir du décalage : un seul événement
+        # upstream of the frameshift: in-frame comparison. From the frameshift on: one event.
         j = fs_codon - 1
         while j < min(len(ref_p), len(hap_p)) and ref_p[j] == hap_p[j]:
-            j += 1  # le décalage peut ne changer l'acide aminé qu'un peu plus loin
+            j += 1  # the frameshift can change the amino acid only a little further
         effect.changes = _inframe(ref_p[: fs_codon - 1], hap_p[: fs_codon - 1])
         if j < len(hap_p) and hap_p[j] == "*":
             effect.changes.append(ProteinChange("stop_gained", f"p.{_aa(ref_p, j)}*", j + 1))
@@ -227,12 +227,12 @@ def haplotype_effect(hap: CdsHaplotype, ref_cds: str) -> HaplotypeEffect:
     lost = [c.position for c in effect.changes if c.kind in ("stop_gained", "frameshift", "start_lost")]
     if lost:
         effect.truncated_at = min(lost) - 1
-        cut = effect.truncated_at + 1  # 1er acide aminé perdu ; la cause est toujours en amont ou dessus
+        cut = effect.truncated_at + 1  # first lost amino acid. The cause is always upstream or at this position.
         effect.masked = [d.raw for d in diffs if d.codon > cut]
     return effect
 
 
-# --- verdict par individu --------------------------------------------------------------------
+# --- verdict per sample -----------------------------------------------------------------------
 
 
 @dataclass
@@ -248,22 +248,22 @@ class SampleVerdict:
     def summary(self) -> str:
         n, total = self.altered_copies, len(self.copies)
         if n == 0:
-            return "aucune copie à séquence modifiée"
+            return "no copy with a changed sequence"
         if n == total:
-            return f"{'les deux copies' if total == 2 else 'la copie'} à séquence modifiée"
-        return f"{n} copie à séquence modifiée sur {total} (une copie inchangée)"
+            return "both copies have a changed sequence" if total == 2 else "the copy has a changed sequence"
+        return f"{n} of {total} copies has a changed sequence (one copy is unchanged)"
 
 
 def classify_pseudo_samples(tx: TranscriptHaplotypes) -> dict[str, dict[int, SampleVerdict]]:
-    """Sortie haplo d'un VCF de pseudo-échantillons (phase.write_scenario_vcf) :
-    individu → scénario → verdict, les copies dans l'ordre (gauche puis droite du '|')."""
+    """haplo output of a pseudo-sample VCF (phase.write_scenario_vcf):
+    sample → scenario → verdict, with the copies in order (left, then right of the '|')."""
     from .phase import parse_pseudo_name
 
     effects: dict[int, HaplotypeEffect] = {}
     copies: dict[tuple[str, int], dict[int, HaplotypeEffect]] = {}
     for name, haps in tx.sample_haplotypes().items():
         sample, scenario, copy = parse_pseudo_name(name)
-        hap = haps[0]  # pseudo-échantillon homozygote : deux fois le même haplotype
+        hap = haps[0]  # homozygous pseudo-sample: the same haplotype two times
         if id(hap) not in effects:
             effects[id(hap)] = haplotype_effect(hap, tx.ref_cds)
         copies.setdefault((sample, scenario), {})[copy] = effects[id(hap)]

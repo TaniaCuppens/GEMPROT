@@ -1,6 +1,6 @@
-"""Cas du papier (PRNP, HFE) et cas synthétiques de classify, sur sorties haplo figées.
+"""Paper cases (PRNP, HFE) and synthetic classify cases, on frozen haplo outputs.
 
-VCF : tests/make_test_vcfs.py ; sorties haplo : tests/data/haplo/<nom>.scenarios.haplo.json.
+VCF: tests/make_test_vcfs.py. haplo outputs: tests/data/haplo/<name>.scenarios.haplo.json.
 """
 
 from pathlib import Path
@@ -24,7 +24,7 @@ def _copies(results, sample):
     return scenario.verdict.copies
 
 
-# --- PRNP (NM_000311.5, brin +) : Monari 1994 --------------------------------------------------
+# --- PRNP (NM_000311.5, + strand): Monari 1994 ------------------------------------------------
 
 
 @pytest.fixture(scope="module")
@@ -33,23 +33,23 @@ def prnp():
 
 
 def test_prnp_ffi_d178n_with_129m(prnp):
-    """Insomnie fatale familiale : 178N porté par la copie 129M, 129V sur l'autre copie."""
+    """Fatal familial insomnia: copy 129M carries 178N, and 129V is on the other copy."""
     assert [c.label for c in _copies(prnp, "IFF")] == ["p.Asp178Asn", "p.Met129Val"]
 
 
 def test_prnp_cjd_d178n_with_129v(prnp):
-    """Creutzfeldt-Jakob : 178N et 129V sur la même copie."""
-    assert [c.label for c in _copies(prnp, "MCJ")] == ["p.Met129Val, p.Asp178Asn", "référence"]
+    """Creutzfeldt-Jakob: 178N and 129V on the same copy."""
+    assert [c.label for c in _copies(prnp, "MCJ")] == ["p.Met129Val, p.Asp178Asn", "reference"]
 
 
 def test_prnp_same_variants_different_proteins(prnp):
-    """Mêmes génotypes variant par variant (hétérozygotes) mais protéines différentes."""
+    """Same genotypes variant by variant (heterozygous), but different proteins."""
     iff = {c.protein for c in _copies(prnp, "IFF")}
     mcj = {c.protein for c in _copies(prnp, "MCJ")}
     assert iff.isdisjoint(mcj)
 
 
-# --- HFE (NM_000410.4, brin +) : Uguen 2017 ----------------------------------------------------
+# --- HFE (NM_000410.4, + strand): Uguen 2017 --------------------------------------------------
 
 
 @pytest.fixture(scope="module")
@@ -62,7 +62,7 @@ def hfe():
     [
         ("C282Y_HOMO", ["p.Cys282Tyr", "p.Cys282Tyr"], 2),
         ("C282Y_H63D_TRANS", ["p.Cys282Tyr", "p.His63Asp"], 2),
-        ("C282Y_H63D_CIS", ["p.His63Asp, p.Cys282Tyr", "référence"], 1),
+        ("C282Y_H63D_CIS", ["p.His63Asp, p.Cys282Tyr", "reference"], 1),
     ],
 )
 def test_hfe(hfe, sample, labels, altered):
@@ -71,7 +71,7 @@ def test_hfe(hfe, sample, labels, altered):
     assert sum(c.altered for c in copies) == altered
 
 
-# --- cas synthétiques sur PRNP -----------------------------------------------------------------
+# --- synthetic cases on PRNP ------------------------------------------------------------------
 
 
 @pytest.fixture(scope="module")
@@ -85,14 +85,14 @@ def synth():
         ("START_PERDU", "p.Met1?", 0),
         ("STOP_GAGNE", "p.Trp7*", 6),
         ("DEL_EN_PHASE", "p.Met129del", None),
-        ("STOP_PERDU", "p.Ter254Argext*?", None),  # CDS haplo sans 3'UTR : longueur inconnue
-        ("MEME_CODON_CIS", "p.Asp178Lys", None),  # GAC → AAA : ni Asn ni Glu
+        ("STOP_PERDU", "p.Ter254Argext*?", None),  # haplo CDS without 3'UTR: length is unknown
+        ("MEME_CODON_CIS", "p.Asp178Lys", None),  # GAC → AAA: not Asn, not Glu
     ],
 )
 def test_single_altered_copy(synth, sample, label, truncated_at):
     altered, ref = _copies(synth, sample)
     assert altered.label == label and altered.truncated_at == truncated_at
-    assert ref.label == "référence"
+    assert ref.label == "reference"
 
 
 def test_same_codon_in_trans(synth):
@@ -107,7 +107,7 @@ def test_frameshift_creating_stop_masks_downstream_insertion(synth):
     altered, _ = _copies(synth, "FS_STOP")
     assert altered.label == "p.Met134*"
     assert [d.diff for d in altered.masked] == ["410insA"]
-    assert not altered.compensated_frameshift  # le stop arrive avant la 2e indel
+    assert not altered.compensated_frameshift  # the stop comes before the second indel
 
 
 def test_compensated_frameshift(synth):

@@ -1,8 +1,8 @@
-"""Haplosaurus (`haplo`) : lancement et lecture de la sortie JSON.
+"""Haplosaurus (`haplo`): run it and read its JSON output.
 
-haplo applique tous les variants d'un haplotype à la séquence codante (CDS) d'un transcrit.
-On garde ses CDS d'haplotype (séquence + différences + échantillons porteurs) ; la traduction
-et l'interprétation sont faites ensuite par `classify`.
+haplo applies all the variants of a haplotype to the coding sequence (CDS) of a transcript.
+GEMPROT keeps its haplotype CDS (sequence, differences, carrier samples). Then `classify`
+translates and interprets them.
 """
 
 from __future__ import annotations
@@ -17,16 +17,16 @@ from .tools import run_tool
 
 @dataclass(frozen=True)
 class CdsDiff:
-    diff: str  # notation haplo, en coordonnées CDS : "224G>A", "30delG"
+    diff: str  # haplo notation, in CDS coordinates: "224G>A", "30delG"
     variant_id: str | None
 
 
 @dataclass
 class CdsHaplotype:
     name: str
-    seq: str  # CDS de l'haplotype, sans tirets
+    seq: str  # haplotype CDS, without dashes
     diffs: list[CdsDiff]
-    samples: dict[str, int]  # échantillon → nombre de copies (1 ou 2)
+    samples: dict[str, int]  # sample → number of copies (1 or 2)
 
 
 @dataclass
@@ -36,7 +36,7 @@ class TranscriptHaplotypes:
     haplotypes: list[CdsHaplotype] = field(default_factory=list)
 
     def sample_haplotypes(self) -> dict[str, list[CdsHaplotype]]:
-        """Pour chaque échantillon, ses deux copies (ou une seule si haploïde)."""
+        """For each sample, its two copies (or one copy if haploid)."""
         out: dict[str, list[CdsHaplotype]] = {}
         for hap in self.haplotypes:
             for sample, n in hap.samples.items():
@@ -48,7 +48,7 @@ def _ref_cds(cds_haplotypes: list[dict]) -> str:
     for h in cds_haplotypes:
         if not h.get("diffs"):
             return h["seq"]
-    # aucun porteur de la référence : la 1re séquence alignée est la référence
+    # no carrier of the reference: the first aligned sequence is the reference
     return cds_haplotypes[0]["aligned_sequences"][0].replace("-", "")
 
 

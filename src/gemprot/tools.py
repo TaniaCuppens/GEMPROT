@@ -1,8 +1,8 @@
-"""Lancement des outils externes (haplo, vep, bcftools…).
+"""Runs the external tools (haplo, vep, bcftools…).
 
-Dans l'image gemprot, les outils sont sur le PATH et sont appelés directement.
-Sinon (développement), ils passent par `singularity exec` sur le conteneur de la config.
-Les commandes sont toujours des listes : jamais de shell.
+In the gemprot image, the tools are on the PATH and GEMPROT calls them directly.
+Else (development), GEMPROT calls them with `singularity exec` on the container from the config.
+The commands are always lists. GEMPROT never uses a shell.
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ def build_command(
         return cmd
     runner = shutil.which("singularity") or shutil.which("apptainer")
     if runner is None:
-        raise ToolError(f"{cmd[0]} introuvable et ni singularity ni apptainer n'est installé")
+        raise ToolError(f"{cmd[0]} not found, and singularity or apptainer is not installed")
     mounts: list[str] = []
     for b in dict.fromkeys(Path(b).resolve() for b in (*binds, Path.cwd())):
         mounts += ["-B", str(b)]
@@ -42,5 +42,5 @@ def run_tool(
     full = build_command(cmd, container, binds)
     proc = subprocess.run(full, capture_output=True, text=True)
     if proc.returncode != 0:
-        raise ToolError(f"échec de {cmd[0]} (code {proc.returncode}) :\n{proc.stderr.strip()}")
+        raise ToolError(f"{cmd[0]} failed (code {proc.returncode}):\n{proc.stderr.strip()}")
     return proc

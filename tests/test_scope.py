@@ -1,4 +1,4 @@
-"""Tri des variants avant les scénarios : seuls ceux qui changent la protéine comptent."""
+"""Variant selection before the scenarios: only the variants that change the protein count."""
 
 from pathlib import Path
 
@@ -59,7 +59,7 @@ def test_remap_vep(nat2):
     assert len(remapped.effects) == 3
 
 
-# --- cas construits ---------------------------------------------------------------------------
+# --- built cases ------------------------------------------------------------------------------
 
 
 def _vcf(positions):
@@ -95,4 +95,4 @@ def test_variant_outside_transcript():
     vcf = _vcf([100, 900])
     vep = an.VepResult({"v0_1": _effect("missense_variant", "p.Lys10Arg", 10)})
     _, (site,) = scope.protein_records(vcf, vep)
-    assert site.consequence == "hors transcrit"
+    assert site.consequence == "outside transcript"

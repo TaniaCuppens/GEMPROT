@@ -1,3 +1,3 @@
-"""GEMPROT 2 : interprétation cis/trans des variants à l'échelle de la protéine."""
+"""GEMPROT 2: cis/trans interpretation of variants at the protein level."""
 
 __version__ = "2.0.0.dev0"

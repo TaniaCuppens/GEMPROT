@@ -1,4 +1,4 @@
-"""Extraction d'une région et d'échantillons d'un VCF avec bcftools (sans shell)."""
+"""Extracts a region and samples from a VCF with bcftools (no shell)."""
 
 from __future__ import annotations
 
@@ -16,9 +16,9 @@ def extract_region(
     cfg: Config,
     samples: Sequence[str] = (),
 ) -> Path:
-    """Garde la région (ex. 13:20187470-20192974) et, si donnés, les échantillons demandés.
+    """Keeps the region (e.g. 13:20187470-20192974) and, if given, the requested samples.
 
-    Le VCF d'entrée doit être compressé (bgzip) et indexé.
+    The input VCF must be compressed (bgzip) and indexed.
     """
     cmd = ["bcftools", "view", "-r", region, "-Oz", "-o", out_vcf]
     if samples:

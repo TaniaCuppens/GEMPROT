@@ -1,15 +1,15 @@
-"""Fige le cas de phasage NAT2 (trio CEPH 1463 de 1000 Genomes, 30x GRCh38) dans tests/data/.
+"""Freeze the NAT2 phasing case (CEPH 1463 trio from 1000 Genomes, 30x GRCh38) in tests/data/.
 
-    python tests/make_phasing_fixtures.py   # conteneur + réseau requis
+    python tests/make_phasing_fixtures.py   # needs the container and the network
 
-NAT2 : profil d'acétylation déterminé par la combinaison de SNP faux-sens sur chaque copie.
-NA12878 porte c.341T>C (p.Ile114Thr), c.481C>T (p.Leu161=) et c.803 (p.Arg268Lys) hétérozygotes.
+NAT2: the combination of missense SNPs on each copy sets the acetylation profile.
+NA12878 carries c.341T>C (p.Ile114Thr), c.481C>T (p.Leu161=) and c.803 (p.Arg268Lys), heterozygous.
 
-- nat2_trio.grch38.vcf : génotypes du panel phasé 1000G, phase retirée (`/`), INFO retirée ;
-- phasing/nat2_trio.panel.vcf : les mêmes, avec la phase du panel (SHAPEIT + trio) ;
-- phasing/nat2_trio.whatshap.vcf : WhatsHap sur les reads seuls (CRAM 1000G, région extraite) ;
+- nat2_trio.grch38.vcf: genotypes from the phased 1000G panel, with no phase (`/`) and no INFO.
+- phasing/nat2_trio.panel.vcf: the same genotypes, with the panel phase (SHAPEIT + trio).
+- phasing/nat2_trio.whatshap.vcf: WhatsHap on the reads only (1000G CRAM, extracted region).
 - nat2_trio.ped.
-Les BAM régionaux ne sont pas gardés (régénérés par ce script).
+The script does not keep the regional BAM files. It makes them again on each run.
 """
 
 import re
@@ -69,7 +69,7 @@ def main() -> None:
         out = run_whatshap(tmp_vcf, bams, list(CRAMS), tmp / "whatshap.vcf", cfg)
         kept = [line for line in out.read_text().splitlines() if not line.startswith("##commandline")]
         (DATA / "phasing" / "nat2_trio.whatshap.vcf").write_text("\n".join(kept) + "\n")
-    print("ok :", vcf, "et tests/data/phasing/")
+    print("ok:", vcf, "and tests/data/phasing/")
 
 
 if __name__ == "__main__":

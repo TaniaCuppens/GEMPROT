@@ -1,9 +1,9 @@
-"""Régénère les VCF de test PRNP et HFE (GRCh38).
+"""Make the PRNP and HFE test VCFs again (GRCh38).
 
-Coordonnées réelles prises dans ClinVar 2026-04 ; les individus sont fictifs. Les cas synthétiques
-utilisent la séquence de référence (PRNP : un seul exon codant, brin +, c.1 = 20:4699221).
+The coordinates are real and come from ClinVar 2026-04. The samples are fictional. The synthetic
+cases use the reference sequence (PRNP: one coding exon, + strand, c.1 = 20:4699221).
 
-    python tests/make_test_vcfs.py           # écrit dans tests/data/
+    python tests/make_test_vcfs.py           # writes to tests/data/
 """
 
 from pathlib import Path
@@ -21,7 +21,7 @@ HEADER = [
 
 
 def write(path, chrom, length, records, samples):
-    """records : (pos, id, ref, alt, {échantillon: GT}) ; un échantillon absent est 0|0."""
+    """records: (pos, id, ref, alt, {sample: GT}). An absent sample is 0|0."""
     with open(path, "w") as fh:
         fh.write("\n".join(HEADER + [f"##contig=<ID={chrom},length={length}>"]) + "\n")
         fh.write("\t".join("#CHROM POS ID REF ALT QUAL FILTER INFO FORMAT".split() + samples) + "\n")
@@ -33,20 +33,20 @@ def write(path, chrom, length, records, samples):
 def main():
     fa = Fasta(config.load().fasta)
 
-    def g(c):  # PRNP c. → position génomique
+    def g(c):  # PRNP c. → genomic position
         return PRNP_C1 + c - 1
 
     def b(c):
         return fa.fetch("20", g(c), g(c))
 
-    # Monari 1994 : D178N avec 129M en cis → insomnie fatale familiale ; avec 129V → Creutzfeldt-Jakob
+    # Monari 1994: D178N with 129M in cis → fatal familial insomnia. With 129V → Creutzfeldt-Jakob
     assert b(385) == "A" and b(532) == "G"
     write(DATA / "prnp_d178n_m129v.grch38.vcf", "20", 64444167, [
         (g(385), "rs1799990", "A", "G", {"IFF": "0|1", "MCJ": "1|0"}),
         (g(532), "rs74315403", "G", "A", {"IFF": "1|0", "MCJ": "1|0"}),
     ], ["IFF", "MCJ"])
 
-    # Uguen 2017 : HFE C282Y / H63D
+    # Uguen 2017: HFE C282Y / H63D
     write(DATA / "hfe_c282y_h63d.grch38.vcf", "6", 170805979, [
         (26090951, "rs1799945", "C", "G", {"C282Y_H63D_TRANS": "0|1", "C282Y_H63D_CIS": "1|0"}),
         (26092913, "rs1800562", "G", "A", {"C282Y_HOMO": "1|1", "C282Y_H63D_TRANS": "1|0", "C282Y_H63D_CIS": "1|0"}),
@@ -59,7 +59,7 @@ def main():
         (g(384), "del129", b(384) + "ATG", b(384), {"DEL_EN_PHASE": "1|0"}),
         (g(385), "multi", "A", "G,C", {"MULTI": "1|2"}),
         (g(399), "fs400", b(399) + b(400), b(399), {"FS_STOP": "1|0"}),
-        (g(409), "ins409", b(409), b(409) + "A", {"FS_STOP": "1|0"}),  # en aval du stop : masqué
+        (g(409), "ins409", b(409), b(409) + "A", {"FS_STOP": "1|0"}),  # downstream of the stop: masked
         (g(499), "fs500", b(499) + "A", b(499), {"FS_COMPENSE": "1|0"}),
         (g(503), "ins503", "A", "AC", {"FS_COMPENSE": "1|0"}),
         (g(532), "c532", "G", "A", {"MEME_CODON_CIS": "1|0", "MEME_CODON_TRANS": "1|0"}),

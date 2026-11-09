@@ -1,4 +1,4 @@
-"""Mode individu : sources de phase → tri des variants → audit → scénarios → haplo → effet de chaque copie."""
+"""Sample mode: phase sources → variant selection → audit → scenarios → haplo → effect of each copy."""
 
 from __future__ import annotations
 
@@ -19,18 +19,18 @@ from .scope import Outside, protein_records, remap_phase, remap_vep, subset
 class ScenarioResult:
     scenario: Scenario
     verdict: SampleVerdict
-    relations: list[tuple[str, str, str]]  # (variant a, variant b, cis/trans) pour les paires de phase inconnue
+    relations: list[tuple[str, str, str]]  # (variant a, variant b, cis/trans) for pairs with an unknown phase
 
 
 @dataclass
 class SampleResult:
     audit: SampleAudit
     scenarios: list[ScenarioResult]
-    phase: FusedPhase | None = None  # sources de phase comparées (si BAM ou .ped fournis)
+    phase: FusedPhase | None = None  # compared phase sources (if BAM or .ped files are given)
 
     @property
     def conclusive(self) -> bool:
-        """Toutes les hypothèses de phase mènent au même nombre de copies à séquence modifiée."""
+        """All phase hypotheses give the same number of copies with a changed sequence."""
         return len({s.verdict.altered_copies for s in self.scenarios}) == 1
 
 
@@ -41,7 +41,7 @@ class IndivResult:
     samples: dict[str, SampleResult]
     annotations: Annotations | None = None
     vcf: Vcf | None = field(default=None, repr=False)
-    outside: list[Outside] = field(default_factory=list)  # sites écartés des scénarios (sans effet protéique)
+    outside: list[Outside] = field(default_factory=list)  # sites excluded from the scenarios (no protein effect)
 
 
 def prepare(vcf_path: Path | Vcf, samples: Sequence[str] = ()) -> tuple:
@@ -61,7 +61,7 @@ def assemble(
     verdicts = classify_pseudo_samples(tx)
     results = {}
     for sample, audit in audits.items():
-        unknown = [p for p in audit.pairs if p.relation == "inconnue"]
+        unknown = [p for p in audit.pairs if p.relation == "unknown"]
         results[sample] = SampleResult(
             audit,
             [
@@ -100,15 +100,17 @@ def run(
         vep = vep_effects(vcf, transcript, cfg, workdir)
         keep, outside = protein_records(vcf, vep)
         if not keep:
-            raise ValueError(f"aucun variant ne change la protéine de {transcript} ({len(outside)} hors CDS ou synonymes)")
+            raise ValueError(
+                f"no variant changes the protein of {transcript} ({len(outside)} outside CDS or synonymous)"
+            )
         vcf, vep = subset(vcf, keep), remap_vep(vep, keep)
         phase = phase and {sample: remap_phase(fused, keep) for sample, fused in phase.items()}
     vcf, audits, plan = prepare(vcf, names)
     pseudo = write_scenario_vcf(vcf, plan, workdir / "scenarios.vcf")
     txs = {t.transcript_id: t for t in parse_haplo_json(run_haplo(pseudo, workdir / "haplo.json", cfg))}
     if transcript not in txs:
-        known = ", ".join(sorted(txs)) or "aucun"
-        raise KeyError(f"{transcript} absent de la sortie haplo (transcrits : {known})")
+        known = ", ".join(sorted(txs)) or "none"
+        raise KeyError(f"{transcript} is not in the haplo output (transcripts: {known})")
     tx = txs[transcript]
     ann = None
     if with_annotations:

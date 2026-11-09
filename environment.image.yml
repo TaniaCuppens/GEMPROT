@@ -1,4 +1,4 @@
-# Environnement de l'image gemprot (Dockerfile). Versions figées ; vep 115 = version du cache.
+# Environment of the gemprot image (Dockerfile). Pinned versions. vep 115 = cache version.
 channels:
   - conda-forge
   - bioconda
