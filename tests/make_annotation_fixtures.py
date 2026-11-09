@@ -1,12 +1,13 @@
 """Fige les sources d'annotation des VCF de test dans tests/data/annot/ (conteneur + réseau requis).
 
-    python tests/make_annotation_fixtures.py
+    python tests/make_annotation_fixtures.py [cas …]   # tous les cas par défaut
 
 Pour chaque cas : sortie VEP des sites, lignes ClinVar, lignes dbNSFP (colonnes utiles seulement),
 protéine UniProt + domaines Pfam.
 """
 
 import json
+import sys
 import tempfile
 from pathlib import Path
 
@@ -22,6 +23,7 @@ CASES = {
     "prnp_d178n_m129v": "NM_000311.5",
     "prnp_synthetic": "NM_000311.5",
     "hfe_c282y_h63d": "NM_000410.4",
+    "nat2_trio": "NM_000015.3",
 }
 # REVEL et CADD exclus : licences non commerciales, pas de redistribution dans un dépôt public.
 # AlphaMissense est sous CC BY 4.0.
@@ -34,7 +36,8 @@ def main() -> None:
     header = an.tabix(cfg.annotations["dbnsfp"], [], cfg, header=True)[-1]
     cols = header.lstrip("#").split("\t")
     keep = [cols.index(c) for c in DBNSFP_COLS]
-    for name, tx in CASES.items():
+    for name in sys.argv[1:] or CASES:
+        tx = CASES[name]
         vcf = read_vcf(DATA / f"{name}.grch38.vcf")
         with tempfile.TemporaryDirectory(dir=Path.cwd()) as tmp:
             sites = an.write_sites_vcf(vcf, Path(tmp) / "sites.vcf")

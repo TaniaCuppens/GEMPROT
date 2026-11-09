@@ -1,0 +1,13 @@
+{
+ "protein_id": "NP_000006.2",
+ "uniprot": "P11245",
+ "length": 290,
+ "domains": [
+  {
+   "accession": "PF00797",
+   "name": "Arylamine N-acetyltransferase",
+   "start": 20,
+   "end": 279
+  }
+ ]
+}

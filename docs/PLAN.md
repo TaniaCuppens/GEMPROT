@@ -114,8 +114,9 @@ l'entrée/sortie quand la FASTA ou le VCF utilisateur est en `chr`.
    source et par paire. Cas test : NAT2, trio CEPH 1463 1000G 30x (NA12878 : c.341C + c.481T en trans de
    c.803 ; 32 scénarios sans phase → 1 ; trio et reads d'accord, et d'accord avec le panel 1000G).
    Reste : 7b gnomAD co-occurrence (paires rares), 7c SHAPEIT5 (communs, `--use-PS`).
-   À faire aussi : limiter scénarios et paires aux variants qui touchent la protéine (les introniques
-   multiplient les scénarios sans changer les copies).
+   Fait (2026-11-06) : scénarios et paires limités aux variants qui changent la protéine (`scope.py`,
+   après la fusion de la phase) ; les autres sont listés à part, épissage signalé (non modélisé).
+   NAT2 sans phase : NA12891 256 → 4 scénarios, NA12878 32 → 2. `--all-variants` pour l'ancien comportement.
 8. Mode pop + stats. Sortie graphique : **lolliplot miroir** groupe A (haut) / groupe B (bas) en SVG
    dans le rapport HTML pop (idée reprise de `lolliplot_update`,
    trackViewer → réécrit sans R) : transcrit MANE, hauteur = nombre de **haplotypes** porteurs,

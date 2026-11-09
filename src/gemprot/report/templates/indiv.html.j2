@@ -154,6 +154,15 @@ footer { color: var(--muted); font-size: 12px; margin-top: 32px; }
   </table>
   {% endif %}
 
+  {% if s.outside %}
+  {% set splice = s.outside|selectattr('splice')|list %}
+  {% if splice %}<ul class="alerts">{% for v in splice %}<li>{{ v.label }} : {{ v.consequence }}, effet sur l'épissage non modélisé</li>{% endfor %}</ul>{% endif %}
+  <details>
+    <summary>{{ s.outside|length }} variant{{ 's' if s.outside|length > 1 }} hors scénarios (ne changent pas la séquence de la protéine)</summary>
+    <ul>{% for v in s.outside %}<li>{{ v.label }} — {{ v.consequence }}</li>{% endfor %}</ul>
+  </details>
+  {% endif %}
+
   {% for sc in s.scenarios %}
   <div class="scenario">
     <div class="scenario-head"{% if s.scenarios|length == 1 %} hidden{% endif %}>

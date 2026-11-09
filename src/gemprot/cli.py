@@ -14,6 +14,7 @@ from .annotate import Annotations, copy_variants
 from .classify import hgvs_c
 from .extract import extract_region
 from .phasing import SOURCE_LABELS, read_ped
+from .scope import Outside
 
 app = typer.Typer(help="GEMPROT 2 : les deux protéines d'un individu à partir d'un VCF phasé.")
 
@@ -23,11 +24,25 @@ def main() -> None:
     pass
 
 
-def _print_sample(name: str, res: indiv_mod.SampleResult, ref_cds: str, ann: Annotations | None) -> None:
+def _print_outside(name: str, outside: list[Outside]) -> None:
+    carried = [site for site in outside if site.record.genotypes[name].carried]
+    if not carried:
+        return
+    for site in carried:
+        if site.splice:
+            typer.echo(f"  ! {site.record.label(1)} : {site.consequence}, effet sur l'épissage non modélisé")
+    listed = ", ".join(f"{site.record.label(1)} ({site.consequence})" for site in carried)
+    typer.echo(f"  hors scénarios (ne changent pas la protéine) : {listed}")
+
+
+def _print_sample(
+    name: str, res: indiv_mod.SampleResult, ref_cds: str, ann: Annotations | None, outside: list[Outside]
+) -> None:
     audit = res.audit
     typer.echo(f"{name}")
     for note in audit.notes:
         typer.echo(f"  ! {note}")
+    _print_outside(name, outside)
     if res.phase:
         f = res.phase
         typer.echo(f"  sources de phase : {', '.join(SOURCE_LABELS[s] for s in f.sources) or 'aucune'}")
@@ -84,10 +99,14 @@ def indiv(
     ped: Optional[Path] = typer.Option(None, "--ped", exists=True, help="Pedigree .ped (phasage par trio ; parents dans le VCF)"),
     html: Optional[Path] = typer.Option(None, "--html", help="Écrit le rapport HTML autonome ici"),
     annotate: bool = typer.Option(True, help="ClinVar, AlphaMissense, REVEL, CADD et domaines"),
+    protein_only: bool = typer.Option(
+        True, "--protein-only/--all-variants",
+        help="Scénarios limités aux variants qui changent la protéine (les autres sont listés à part)",
+    ),
     offline: bool = typer.Option(False, help="Pas de requête UniProt/InterPro (cache seulement)"),
     config: Path = typer.Option(config_mod.DEFAULT_CONFIG, help="Fichier de configuration"),
 ) -> None:
-    """Pour chaque individu : phase des variants, copies de la protéine altérées, variants masqués en cis."""
+    """Pour chaque individu : phase des variants, copies de la protéine à séquence modifiée, variants masqués en cis."""
     cfg = config_mod.load(config)
     with tempfile.TemporaryDirectory(prefix="gemprot_", dir=Path.cwd()) as tmp:
         tmpdir = Path(tmp)
@@ -100,14 +119,14 @@ def indiv(
             vcf_in = extract_region(vcf_in, region, tmpdir / "region.vcf.gz", cfg, keep)
         try:
             result = indiv_mod.run(vcf_in, transcript, cfg, tmpdir, sample, annotate, not offline,
-                                   [b.resolve() for b in bam], ped.resolve() if ped else None)
+                                   [b.resolve() for b in bam], ped.resolve() if ped else None, protein_only)
         except (KeyError, ValueError) as e:
             raise typer.BadParameter(str(e.args[0]))
     if result.annotations:
         for note in result.annotations.notes:
             typer.echo(f"! {note}")
     for name, res in result.samples.items():
-        _print_sample(name, res, result.ref_cds, result.annotations)
+        _print_sample(name, res, result.ref_cds, result.annotations, result.outside)
     if html:
         from .report import render_indiv
 

@@ -248,10 +248,10 @@ class SampleVerdict:
     def summary(self) -> str:
         n, total = self.altered_copies, len(self.copies)
         if n == 0:
-            return "aucune copie altérée"
+            return "aucune copie à séquence modifiée"
         if n == total:
-            return f"{'les deux copies' if total == 2 else 'la copie'} altérée{'s' if total == 2 else ''}"
-        return f"{n} copie altérée sur {total} (une copie normale)"
+            return f"{'les deux copies' if total == 2 else 'la copie'} à séquence modifiée"
+        return f"{n} copie à séquence modifiée sur {total} (une copie inchangée)"
 
 
 def classify_pseudo_samples(tx: TranscriptHaplotypes) -> dict[str, dict[int, SampleVerdict]]:

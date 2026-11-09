@@ -1,4 +1,4 @@
-"""Mode individu : sources de phase → audit → scénarios → haplo → effet de chaque copie."""
+"""Mode individu : sources de phase → tri des variants → audit → scénarios → haplo → effet de chaque copie."""
 
 from __future__ import annotations
 
@@ -6,12 +6,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Sequence
 
-from .annotate import Annotations, annotate
+from .annotate import Annotations, annotate, vep_effects
 from .classify import SampleVerdict, classify_pseudo_samples, translate
 from .config import Config
 from .haplotypes import TranscriptHaplotypes, parse_haplo_json, run_haplo
 from .phase import SampleAudit, Scenario, Vcf, audit_sample, read_vcf, scenarios, write_scenario_vcf
 from .phasing import FusedPhase, apply, phase_sources
+from .scope import Outside, protein_records, remap_phase, remap_vep, subset
 
 
 @dataclass
@@ -29,7 +30,7 @@ class SampleResult:
 
     @property
     def conclusive(self) -> bool:
-        """Toutes les hypothèses de phase mènent au même nombre de copies altérées."""
+        """Toutes les hypothèses de phase mènent au même nombre de copies à séquence modifiée."""
         return len({s.verdict.altered_copies for s in self.scenarios}) == 1
 
 
@@ -40,6 +41,7 @@ class IndivResult:
     samples: dict[str, SampleResult]
     annotations: Annotations | None = None
     vcf: Vcf | None = field(default=None, repr=False)
+    outside: list[Outside] = field(default_factory=list)  # sites écartés des scénarios (sans effet protéique)
 
 
 def prepare(vcf_path: Path | Vcf, samples: Sequence[str] = ()) -> tuple:
@@ -85,6 +87,7 @@ def run(
     online: bool = True,
     bams: Sequence[Path] = (),
     ped: Path | None = None,
+    protein_only: bool = True,
 ) -> IndivResult:
     vcf = read_vcf(vcf_path)
     names = list(samples) or vcf.samples
@@ -92,6 +95,14 @@ def run(
     if bams or ped:
         phase = phase_sources(vcf, vcf_path, names, cfg, workdir, bams, ped)
         vcf = apply(vcf, phase)
+    vep, outside = None, []
+    if protein_only:
+        vep = vep_effects(vcf, transcript, cfg, workdir)
+        keep, outside = protein_records(vcf, vep)
+        if not keep:
+            raise ValueError(f"aucun variant ne change la protéine de {transcript} ({len(outside)} hors CDS ou synonymes)")
+        vcf, vep = subset(vcf, keep), remap_vep(vep, keep)
+        phase = phase and {sample: remap_phase(fused, keep) for sample, fused in phase.items()}
     vcf, audits, plan = prepare(vcf, names)
     pseudo = write_scenario_vcf(vcf, plan, workdir / "scenarios.vcf")
     txs = {t.transcript_id: t for t in parse_haplo_json(run_haplo(pseudo, workdir / "haplo.json", cfg))}
@@ -102,5 +113,5 @@ def run(
     ann = None
     if with_annotations:
         length = len(translate(tx.ref_cds).rstrip("*"))
-        ann = annotate(vcf, transcript, cfg, workdir, length, online)
-    return IndivResult(transcript, tx.ref_cds, assemble(tx, audits, plan, phase), ann, vcf)
+        ann = annotate(vcf, transcript, cfg, workdir, length, online, vep)
+    return IndivResult(transcript, tx.ref_cds, assemble(tx, audits, plan, phase), ann, vcf, outside)

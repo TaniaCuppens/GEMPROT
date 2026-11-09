@@ -13,6 +13,7 @@ from ..annotate import Annotations, CopyVariant, VariantAnnotation, copy_variant
 from ..classify import THREE, HaplotypeEffect, hgvs_c, parse_diff
 from ..indiv import IndivResult, SampleResult
 from ..phasing import SOURCE_LABELS
+from ..scope import Outside
 
 # géométrie des pistes protéiques (unités du viewBox SVG)
 WIDTH, LEFT, RIGHT = 1000, 70, 20
@@ -34,9 +35,9 @@ VARIANT_STATUS = {
     "hors CDS": "hors séquence codante : non évalué par GEMPROT",
 }
 STATUS = {
-    "good": ("✓", "Aucune copie altérée"),
-    "warning": ("!", "Une copie altérée, une copie normale"),
-    "critical": ("✕", "Toutes les copies altérées"),
+    "good": ("✓", "Aucune copie à séquence modifiée"),
+    "warning": ("!", "Une copie à séquence modifiée, une copie inchangée"),
+    "critical": ("✕", "Toutes les copies à séquence modifiée"),
     "serious": ("?", "Conclusion dépendante de la phase"),
 }
 
@@ -143,7 +144,7 @@ def _copy_view(copy: HaplotypeEffect, index: int, length: int, ref_cds: str,
 
 
 def _sample_view(name: str, res: SampleResult, length: int, ref_cds: str,
-                 ann: Annotations | None = None) -> dict:
+                 ann: Annotations | None = None, outside: list[Outside] = ()) -> dict:
     scenarios = []
     for s in res.scenarios:
         v = s.verdict
@@ -183,6 +184,8 @@ def _sample_view(name: str, res: SampleResult, length: int, ref_cds: str,
         "sources": [SOURCE_LABELS[k] for k in sources],
         "phase_notes": phase_notes,
         "units": res.audit.units,
+        "outside": [{"label": site.record.label(1), "consequence": site.consequence, "splice": site.splice}
+                    for site in outside if site.record.genotypes[name].carried],
         "scenarios": scenarios,
         "n_warnings": max(len(sc["warnings"]) for sc in scenarios),
     }
@@ -225,7 +228,7 @@ def render_indiv(result: IndivResult, out: Path, source: str = "") -> Path:
         source=source,
         version=__version__,
         date=dt.date.today().isoformat(),
-        samples=[_sample_view(n, r, length, result.ref_cds, result.annotations)
+        samples=[_sample_view(n, r, length, result.ref_cds, result.annotations, result.outside)
                  for n, r in result.samples.items()],
         annotated=result.annotations is not None,
         protein=result.annotations.protein if result.annotations else None,

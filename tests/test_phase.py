@@ -91,7 +91,7 @@ def test_haploid(cases):
     assert _relation(r) == "cis" and r.audit.ploidy == 1
     (copy,) = r.scenarios[0].verdict.copies
     assert copy.label == "p.Gly12Valfs*2" and [d.diff for d in copy.masked] == ["224G>A"]
-    assert r.scenarios[0].verdict.summary == "la copie altérée"
+    assert r.scenarios[0].verdict.summary == "la copie à séquence modifiée"
 
 
 def test_vcf_without_ps_is_globally_phased():

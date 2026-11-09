@@ -344,6 +344,12 @@ def combine(
     return ann
 
 
+def vep_effects(vcf: Vcf, transcript: str, cfg: Config, workdir: Path) -> VepResult:
+    """Effet isolé de chaque allèle du VCF sur le transcrit."""
+    sites = write_sites_vcf(vcf, workdir / "sites.vcf")
+    return parse_vep(run_vep(sites, workdir / "sites.vep.json", cfg), transcript)
+
+
 def annotate(
     vcf: Vcf,
     transcript: str,
@@ -351,9 +357,9 @@ def annotate(
     workdir: Path,
     protein_length: int | None = None,
     online: bool = True,
+    vep: VepResult | None = None,
 ) -> Annotations:
-    vep = parse_vep(run_vep(write_sites_vcf(vcf, workdir / "sites.vcf"), workdir / "sites.vep.json", cfg),
-                    transcript)
+    vep = vep or vep_effects(vcf, transcript, cfg, workdir)
     regions = sorted({f"{_bare(r.chrom)}:{r.pos}-{r.pos + len(r.ref) - 1}" for r in vcf.records})
     clinvar, scores, notes = {}, {}, []
     if (path := cfg.annotations.get("clinvar")) and path.exists():
