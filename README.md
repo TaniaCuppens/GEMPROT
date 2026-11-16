@@ -13,7 +13,6 @@ GEMPROT proposes two different modes: the first mode outputs both sequences for 
 -	[GEMPROT Input](#GEMPROT-Input)
 -	[GEMPROT Output](#GEMPROT-Output)
 -	[RunExamples](#RunExamples)
--	[Contact Information](#Contact-Information)
 -	[Publication](#Publication)
 
 ## Dependencies
@@ -132,12 +131,6 @@ You can add `–-synonymous` argument to view the synonymous mutation on the hap
 ## Result Examples
 
 To see the examples results go to the Web Application :http://med-laennec.univ-brest.fr/GEMPROT/ 
-
-## Contact Information
-
-Tania Cuppens
-
-Email: tania.cuppens@inserm.fr
 
 ## Publication
 If you have used Gemprot in a scientific publication, we would appreciate citations to the following paper:
